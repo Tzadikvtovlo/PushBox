@@ -33,7 +33,6 @@ function updateBadgeAndTooltip() {
     let bgColor = "#6b21a8";
     let title = "PushBox";
 
-    // תצוגת מספר הודעות רק אם המשתמש בחר 'both' או 'badge'
     if (unreadCount > 0 && (notificationStyle === 'both' || notificationStyle === 'badge')) {
       text = String(unreadCount);
       title = `${unreadCount} הודעות חדשות`;
@@ -98,9 +97,40 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
 });
 
+// טיפול בסיום טיימר ה-Snooze והחזרה ללא-נקרא מבוסס זמן מדויק
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM_NAME) {
     checkForNewSms(false);
+  } else if (alarm.name.startsWith("snooze_")) {
+    const msgId = alarm.name.replace("snooze_", "");
+    chrome.storage.local.get(['unreadItems', 'unreadCount', 'snoozedItems'], (data) => {
+      let unreadItems = data.unreadItems || [];
+      let unreadCount = data.unreadCount || 0;
+      let snoozed = data.snoozedItems || {};
+
+      delete snoozed[msgId];
+
+      if (!unreadItems.includes(msgId)) {
+        unreadItems.push(msgId);
+        unreadCount += 1;
+      }
+
+      chrome.storage.local.set({ 
+        unreadItems: unreadItems, 
+        unreadCount: unreadCount,
+        snoozedItems: snoozed 
+      }, () => {
+        updateBadgeAndTooltip();
+        
+        chrome.notifications.create('snooze_alert_' + Date.now(), {
+          type: 'basic',
+          iconUrl: 'icon128.png',
+          title: 'הודעה חזרה לטיפול (Snooze)',
+          message: 'הודעה ששוריינה חזרה לרשימת ההודעות שלא נקראו.',
+          priority: 2
+        });
+      });
+    });
   }
 });
 
@@ -231,7 +261,6 @@ async function checkForNewSms(skipNotification = false) {
                 
                 latestMsg.message = latestMsg.message.replace(/(\r?\n){2,}/g, '\n');
                 
-                // שיגור התראה רק אם אנחנו לא מדלגים (דפדפן עלה כרגע) ורק אם המשתמש רוצה פוש 
                 if (!skipNotification && (notificationStyle === 'both' || notificationStyle === 'push')) {
                   showSmsNotification(latestMsg);
                 }
@@ -287,7 +316,6 @@ async function resendLatestSmsNotification() {
               lastMessageText: latestMsg.message 
             });
 
-            // בשליחה יזומה נציג פוש באופן מיידי ללא תלות בהגדרות כדי לוודא שזה עובד
             showSmsNotification(latestMsg);
             resolve(true);
           } else {
