@@ -97,27 +97,24 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
 });
 
-// טיפול בסיום טיימר ה-Snooze והחזרה ללא-נקרא מבוסס זמן מדויק
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM_NAME) {
     checkForNewSms(false);
   } else if (alarm.name.startsWith("snooze_")) {
     const msgId = alarm.name.replace("snooze_", "");
-    chrome.storage.local.get(['unreadItems', 'unreadCount', 'snoozedItems'], (data) => {
+    chrome.storage.local.get(['unreadItems', 'snoozedItems'], (data) => {
       let unreadItems = data.unreadItems || [];
-      let unreadCount = data.unreadCount || 0;
       let snoozed = data.snoozedItems || {};
 
       delete snoozed[msgId];
 
       if (!unreadItems.includes(msgId)) {
         unreadItems.push(msgId);
-        unreadCount += 1;
       }
 
       chrome.storage.local.set({ 
         unreadItems: unreadItems, 
-        unreadCount: unreadCount,
+        unreadCount: unreadItems.length,
         snoozedItems: snoozed 
       }, () => {
         updateBadgeAndTooltip();
@@ -188,10 +185,15 @@ function showSmsNotification(latestMsg) {
   }, 12000); 
 }
 
+function generateMsgId(msg) {
+  const textSample = (msg.message || '').slice(0, 15);
+  return `${msg.receive_date}_${msg.source}_${textSample}`;
+}
+
 async function checkForNewSms(skipNotification = false) {
   setHourglassBadge();
   return new Promise((resolve, reject) => {
-    chrome.storage.local.get(['token', 'lastMessageId', 'unreadCount', 'smsFilters', 'notificationStyle'], async (data) => {
+    chrome.storage.local.get(['token', 'lastMessageId', 'unreadItems', 'smsFilters', 'notificationStyle'], async (data) => {
       if (!data.token) {
         chrome.storage.local.set({ connectionError: "חסר טוקן - הגדר כעת" });
         updateBadgeAndTooltip();
@@ -214,8 +216,9 @@ async function checkForNewSms(skipNotification = false) {
           
           if (result.rows && result.rows.length > 0) {
             const latestMsg = result.rows[0];
-            const newLastMessageId = `${latestMsg.receive_date}_${latestMsg.source}`;
+            const newLastMessageId = generateMsgId(latestMsg);
             const notificationStyle = data.notificationStyle || "both";
+            let unreadItems = data.unreadItems || [];
             
             if (!data.lastMessageId) {
               chrome.storage.local.set({ 
@@ -227,12 +230,12 @@ async function checkForNewSms(skipNotification = false) {
             }
 
             if (newLastMessageId !== data.lastMessageId) {
-              let newMessagesCount = 0;
               const filters = data.smsFilters || [];
+              let addedNew = false;
               
               for (let i = 0; i < result.rows.length; i++) {
                 let msg = result.rows[i];
-                let msgId = `${msg.receive_date}_${msg.source}`;
+                let msgId = generateMsgId(msg);
                 
                 if (msgId === data.lastMessageId) {
                   break;
@@ -246,29 +249,24 @@ async function checkForNewSms(skipNotification = false) {
                 }
                 
                 if (!isFiltered) {
-                  newMessagesCount++;
+                  if (!unreadItems.includes(msgId)) {
+                    unreadItems.push(msgId);
+                    addedNew = true;
+                  }
                 }
               }
               
-              if (newMessagesCount > 0) {
-                const totalUnread = (data.unreadCount || 0) + newMessagesCount;
-                
-                chrome.storage.local.set({ 
-                  lastMessageId: newLastMessageId, 
-                  lastMessageText: latestMsg.message.replace(/(\r?\n){2,}/g, '\n'),
-                  unreadCount: totalUnread
-                });
-                
-                latestMsg.message = latestMsg.message.replace(/(\r?\n){2,}/g, '\n');
-                
-                if (!skipNotification && (notificationStyle === 'both' || notificationStyle === 'push')) {
-                  showSmsNotification(latestMsg);
-                }
-              } else {
-                chrome.storage.local.set({ 
-                  lastMessageId: newLastMessageId, 
-                  lastMessageText: latestMsg.message.replace(/(\r?\n){2,}/g, '\n')
-                });
+              chrome.storage.local.set({ 
+                lastMessageId: newLastMessageId, 
+                lastMessageText: latestMsg.message.replace(/(\r?\n){2,}/g, '\n'),
+                unreadItems: unreadItems,
+                unreadCount: unreadItems.length
+              });
+              
+              latestMsg.message = latestMsg.message.replace(/(\r?\n){2,}/g, '\n');
+              
+              if (addedNew && !skipNotification && (notificationStyle === 'both' || notificationStyle === 'push')) {
+                showSmsNotification(latestMsg);
               }
             }
           }
@@ -310,7 +308,7 @@ async function resendLatestSmsNotification() {
           if (result.rows && result.rows.length > 0) {
             const latestMsg = result.rows[0];
             latestMsg.message = latestMsg.message.replace(/(\r?\n){2,}/g, '\n');
-            const msgId = `${latestMsg.receive_date}_${latestMsg.source}`;
+            const msgId = generateMsgId(latestMsg);
             chrome.storage.local.set({ 
               lastMessageId: msgId, 
               lastMessageText: latestMsg.message 
