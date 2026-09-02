@@ -11,6 +11,8 @@
     "lint": "node --check server.js chrome-polyfill.js"
   },
   "dependencies": {
-    "express": "^4.21.2"
+    "archiver": "^8.0.0",
+    "express": "^4.21.2",
+    "jszip": "^3.10.1"
   }
 }

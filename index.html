@@ -572,7 +572,29 @@
     async function downloadExtensionZip(isBeta) {
       const statusEl = document.getElementById('zipStatus');
       statusEl.style.display = 'block';
-      statusEl.textContent = 'מכין את קבצי ה-ZIP להורדה...';
+      const zipName = isBeta ? 'PushBox-v4.91-Beta.zip' : 'PushBox-v4.6.zip';
+      statusEl.textContent = `מכין ומוריד את ${zipName}...`;
+
+      try {
+        // ניסיון ראשון: הורדה ישירה מהשרת (מהיר, אמין וללא מגבלות דפדפן/iframe)
+        const url = `/api/download-zip?type=${isBeta ? 'beta' : 'stable'}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const blob = await res.blob();
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = zipName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(a.href);
+          statusEl.textContent = `קובץ ה-ZIP (${zipName}) הורד בהצלחה לתיקיית ההורדות!`;
+          setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+          return;
+        }
+      } catch (e) {
+        console.warn('הורדה מהשרת נכשלה, עובר ליצירת זיפ מקומית:', e);
+      }
 
       try {
         const zip = new JSZip();

@@ -1,57 +1,115 @@
-name: Create Release ZIP
+name: יצירת שחרור והורדת ZIP (Release ZIP)
 
 on:
   workflow_dispatch:
+    inputs:
+      release_target:
+        description: 'בחר גרסה לייצור והורדה (בטא או רגיל):'
+        required: true
+        type: choice
+        default: 'בטא (Beta 4.91)'
+        options:
+          - 'בטא (Beta 4.91)'
+          - 'רגיל (Stable 4.6)'
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
         with:
-          fetch-depth: 0 # חובה כדי להביא את ההיסטוריה ואת כל התגיות
+          fetch-depth: 0 # חובה כדי להביא את היסטוריית התגיות
 
-      # חישוב הגרסה הסופית כולל בדיקת כפילויות והוספת תת-גרסה במידת הצורך
-      - name: Determine Release Version
-        id: get_version
+      - name: Determine Version and Setup Package Info
+        id: prep
         run: |
-          BASE_VERSION=$(jq -r '.version' manifest.json)
-          echo "Base version from manifest: $BASE_VERSION"
-
-          # בדיקה אם התגית הבסיסית כבר קיימת
-          if git show-ref --tags "refs/tags/v$BASE_VERSION" --quiet; then
-            echo "Tag v$BASE_VERSION exists. Finding next available sub-version..."
+          CHOICE="${{ github.event.inputs.release_target }}"
+          echo "Selected choice: $CHOICE"
+          
+          if [[ "$CHOICE" == *"בטא"* ]] || [[ "$CHOICE" == *"Beta"* ]]; then
+            IS_BETA="true"
+            MANIFEST_PATH="beta/manifest.json"
+            BASE_VERSION=$(jq -r '.version' beta/manifest.json)
+            echo "Building Beta release. Base version: $BASE_VERSION"
             
-            # חיפוש תגיות קיימות עם תת-גרסה (למשל v4.0.0.1, v4.0.0.2) והבאת הגבוהה ביותר
-            SAFE_BASE=$(echo "$BASE_VERSION" | sed 's/\./\\./g')
-            LATEST_SUB=$(git tag | grep -E "^v${SAFE_BASE}\.[0-9]+$" | sort -V | tail -n 1)
+            # בדיקת תגיות קיימות למניעת כפילויות
+            TAG_PREFIX="v${BASE_VERSION}-beta"
+            if git show-ref --tags "refs/tags/$TAG_PREFIX" --quiet; then
+              echo "Tag $TAG_PREFIX exists. Finding next available sub-version..."
+              SAFE_BASE=$(echo "$BASE_VERSION" | sed 's/\./\\./g')
+              LATEST_SUB=$(git tag | grep -E "^v${SAFE_BASE}\.[0-9]+-beta$" | sort -V | tail -n 1)
 
-            if [ -z "$LATEST_SUB" ]; then
-              FINAL_VERSION="${BASE_VERSION}.1"
+              if [ -z "$LATEST_SUB" ]; then
+                FINAL_VERSION="${BASE_VERSION}.1"
+              else
+                SUB_NUM=$(echo "$LATEST_SUB" | sed 's/-beta$//' | awk -F. '{print $NF}')
+                NEXT_SUB=$((SUB_NUM + 1))
+                FINAL_VERSION="${BASE_VERSION}.${NEXT_SUB}"
+              fi
             else
-              SUB_NUM=$(echo "$LATEST_SUB" | awk -F. '{print $NF}')
-              NEXT_SUB=$((SUB_NUM + 1))
-              FINAL_VERSION="${BASE_VERSION}.${NEXT_SUB}"
+              FINAL_VERSION="$BASE_VERSION"
             fi
+            
+            FINAL_TAG="v${FINAL_VERSION}-beta"
+            RELEASE_NAME="PushBox v${FINAL_VERSION} (גרסת בטא)"
+            ZIP_NAME="PushBox-v${FINAL_VERSION}-Beta.zip"
+            PRERELEASE="true"
+            
           else
-            FINAL_VERSION="$BASE_VERSION"
+            IS_BETA="false"
+            MANIFEST_PATH="manifest.json"
+            BASE_VERSION=$(jq -r '.version' manifest.json)
+            echo "Building Stable release. Base version: $BASE_VERSION"
+            
+            TAG_PREFIX="v${BASE_VERSION}"
+            if git show-ref --tags "refs/tags/$TAG_PREFIX" --quiet; then
+              echo "Tag $TAG_PREFIX exists. Finding next available sub-version..."
+              SAFE_BASE=$(echo "$BASE_VERSION" | sed 's/\./\\./g')
+              LATEST_SUB=$(git tag | grep -E "^v${SAFE_BASE}\.[0-9]+$" | sort -V | tail -n 1)
+
+              if [ -z "$LATEST_SUB" ]; then
+                FINAL_VERSION="${BASE_VERSION}.1"
+              else
+                SUB_NUM=$(echo "$LATEST_SUB" | awk -F. '{print $NF}')
+                NEXT_SUB=$((SUB_NUM + 1))
+                FINAL_VERSION="${BASE_VERSION}.${NEXT_SUB}"
+              fi
+            else
+              FINAL_VERSION="$BASE_VERSION"
+            fi
+            
+            FINAL_TAG="v${FINAL_VERSION}"
+            RELEASE_NAME="PushBox v${FINAL_VERSION} (גרסה רשמית)"
+            ZIP_NAME="PushBox-v${FINAL_VERSION}.zip"
+            PRERELEASE="false"
           fi
           
+          echo "IS_BETA=$IS_BETA" >> $GITHUB_OUTPUT
+          echo "MANIFEST_PATH=$MANIFEST_PATH" >> $GITHUB_OUTPUT
           echo "FINAL_VERSION=$FINAL_VERSION" >> $GITHUB_OUTPUT
-          echo "Resolved version: v$FINAL_VERSION"
+          echo "FINAL_TAG=$FINAL_TAG" >> $GITHUB_OUTPUT
+          echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_OUTPUT
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_OUTPUT
+          echo "PRERELEASE=$PRERELEASE" >> $GITHUB_OUTPUT
+          
+          echo "Summary: Target=$FINAL_TAG, Zip=$ZIP_NAME, PreRelease=$PRERELEASE"
 
-      # חילוץ הודעת הקומיט שבו שונה ה-manifest
       - name: Extract Release Notes
         id: get_notes
         run: |
-          COMMIT_MSG=$(git log -1 --pretty=format:"%B" -- manifest.json)
+          MANIFEST_PATH="${{ steps.prep.outputs.MANIFEST_PATH }}"
+          COMMIT_MSG=$(git log -1 --pretty=format:"%B" -- "$MANIFEST_PATH")
           
           if [ -z "$COMMIT_MSG" ]; then
-            COMMIT_MSG="עדכון גרסה חדשה"
+            if [ "${{ steps.prep.outputs.IS_BETA }}" = "true" ]; then
+              COMMIT_MSG="שחרור גרסת בטא חדשה (${{ steps.prep.outputs.FINAL_TAG }})"
+            else
+              COMMIT_MSG="שחרור גרסה יציבה חדשה (${{ steps.prep.outputs.FINAL_TAG }})"
+            fi
           fi
 
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
@@ -59,19 +117,40 @@ jobs:
           echo "$COMMIT_MSG" >> $GITHUB_ENV
           echo "$EOF" >> $GITHUB_ENV
 
-      # יצירת קובץ ZIP בשם הפרויקט (קבצי הגרסה הרגילה)
-      - name: Create ZIP archive
+      - name: Create ZIP Archive
         run: |
-          zip -r "${{ github.event.repository.name }}.zip" . -x "*.git*" "beta/*" "server.js" "chrome-polyfill.js" "index.html" "package.json" "bun.lock" "metadata.json" "node_modules/*" "*.bat" "*.sh"
+          ZIP_NAME="${{ steps.prep.outputs.ZIP_NAME }}"
+          IS_BETA="${{ steps.prep.outputs.IS_BETA }}"
+          
+          if [ "$IS_BETA" = "true" ]; then
+            echo "Packaging beta folder contents into $ZIP_NAME..."
+            cd beta
+            zip -r "../$ZIP_NAME" . -x "*.git*"
+            cd ..
+          else
+            echo "Packaging stable files into $ZIP_NAME..."
+            zip -r "$ZIP_NAME" manifest.json popup.html popup.js options.html options.js filters.html filters.js background.js offscreen.html offscreen.js icon16.png icon48.png icon128.png
+          fi
+          
+          ls -la "$ZIP_NAME"
 
-      # יצירת ה-Release ב-GitHub
+      # שמירת קובץ ה-ZIP ב-Artifacts של ה-Action (הורדה ישירה בלחיצה אחת מתוך דף ה-Actions)
+      - name: Upload ZIP as Action Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prep.outputs.ZIP_NAME }}
+          path: ${{ steps.prep.outputs.ZIP_NAME }}
+          retention-days: 90
+
+      # יצירת ה-Release ב-GitHub עם קובץ ה-ZIP מצורף
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2.1.0
         with:
-          tag_name: "v${{ steps.get_version.outputs.FINAL_VERSION }}"
-          name: "Release v${{ steps.get_version.outputs.FINAL_VERSION }}"
+          tag_name: "${{ steps.prep.outputs.FINAL_TAG }}"
+          name: "${{ steps.prep.outputs.RELEASE_NAME }}"
           body: "${{ env.RELEASE_NOTES }}"
-          files: "${{ github.event.repository.name }}.zip"
-          prerelease: false
+          files: "${{ steps.prep.outputs.ZIP_NAME }}"
+          prerelease: ${{ steps.prep.outputs.PRERELEASE == 'true' }}
+          make_latest: ${{ steps.prep.outputs.IS_BETA != 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

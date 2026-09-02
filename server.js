@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import JSZip from 'jszip';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -181,6 +182,58 @@ app.use((req, res, next) => {
     }
   }
   next();
+});
+
+// Direct server-side ZIP download endpoint (bypasses iframe restrictions)
+app.get('/api/download-zip', async (req, res) => {
+  const type = req.query.type || 'beta';
+  const isBeta = type === 'beta';
+  const zipName = isBeta ? 'PushBox-v4.91-Beta.zip' : 'PushBox-v4.6.zip';
+
+  try {
+    const zip = new JSZip();
+
+    if (isBeta) {
+      const betaDir = path.join(__dirname, 'beta');
+      if (fs.existsSync(betaDir)) {
+        const files = fs.readdirSync(betaDir);
+        for (const f of files) {
+          const fullPath = path.join(betaDir, f);
+          if (fs.statSync(fullPath).isFile()) {
+            zip.file(f, fs.readFileSync(fullPath));
+          }
+        }
+      }
+    } else {
+      const stableFiles = [
+        'manifest.json', 'popup.html', 'popup.js', 'options.html', 'options.js',
+        'filters.html', 'filters.js', 'background.js', 'offscreen.html', 'offscreen.js',
+        'icon16.png', 'icon48.png', 'icon128.png'
+      ];
+      for (const f of stableFiles) {
+        const fullPath = path.join(__dirname, f);
+        if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
+          zip.file(f, fs.readFileSync(fullPath));
+        }
+      }
+    }
+
+    const buffer = await zip.generateAsync({
+      type: 'nodebuffer',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 9 }
+    });
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${zipName}"`);
+    res.setHeader('Content-Length', buffer.length);
+    return res.end(buffer);
+  } catch (err) {
+    console.error('Error generating ZIP:', err);
+    if (!res.headersSent) {
+      return res.status(500).send('Error creating ZIP: ' + err.message);
+    }
+  }
 });
 
 // Serve static extension and web files
