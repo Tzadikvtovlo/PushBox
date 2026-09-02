@@ -2,6 +2,12 @@ name: Create Release ZIP
 
 on:
   workflow_dispatch:
+    inputs:
+      is_prerelease:
+        description: 'סמן כשחרור בטא (Pre-release - מונע התראות עדכון לכלל המשתמשים)'
+        type: boolean
+        required: true
+        default: true
 
 permissions:
   contents: write
@@ -69,13 +75,14 @@ jobs:
         run: |
           zip -r "${{ github.event.repository.name }}.zip" . -x "*.git*"
 
-      # יצירת ה-Release ב-GitHub
+      # יצירת ה-Release ב-GitHub כגרסת בטא (Pre-release) כדי למנוע התראות עדכון לכלל המשתמשים
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2.1.0
         with:
           tag_name: "v${{ steps.get_version.outputs.FINAL_VERSION }}"
-          name: "Release v${{ steps.get_version.outputs.FINAL_VERSION }}"
+          name: "Release v${{ steps.get_version.outputs.FINAL_VERSION }} (Beta)"
           body: "${{ env.RELEASE_NOTES }}" # שימוש בהודעת הקומיט שנשלפה
           files: "${{ github.event.repository.name }}.zip"
+          prerelease: ${{ github.event.inputs.is_prerelease != 'false' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,16 @@
+{
+  "name": "pushbox",
+  "version": "4.6.0",
+  "description": "פושבוקס - קבלת, שליחה וניהול SMS ממערכת ימות המשיח ישירות לדפדפן",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "node -e \"console.log('Build complete')\"",
+    "lint": "node --check server.js chrome-polyfill.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  chrome.storage.local.get(['token', 'phoneNumber', 'interval', 'notificationStyle'], (data) => {
+  chrome.storage.local.get(['token', 'phoneNumber', 'interval', 'notificationStyle', 'checkBetaUpdates'], (data) => {
     if (data.token) document.getElementById('token').value = data.token;
     if (data.phoneNumber) document.getElementById('phoneNumber').value = data.phoneNumber;
     if (data.interval !== undefined) document.getElementById('interval').value = data.interval;
@@ -8,12 +8,17 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       document.getElementById('notificationStyle').value = 'both';
     }
+    const betaCheck = document.getElementById('checkBetaUpdates');
+    if (betaCheck) {
+      betaCheck.checked = data.checkBetaUpdates === true;
+    }
   });
 
   const versionBox = document.getElementById('versionBox');
   const manifest = chrome.runtime.getManifest();
   const currentVersion = manifest.version;
-  versionBox.textContent = `v${currentVersion}`;
+  const displayVersion = manifest.version_name ? `v${manifest.version_name}` : `v${currentVersion} (בטא)`;
+  versionBox.textContent = displayVersion;
   versionBox.style.direction = 'ltr';
 
   function isNewerVersion(latest, current) {
@@ -38,16 +43,32 @@ document.addEventListener('DOMContentLoaded', () => {
       versionBox.title = 'בודק עדכונים...';
     }
     try {
-      const res = await fetch('https://api.github.com/repos/Tzadikvtovlo/PushBox/releases/latest');
-      if (!res.ok) throw new Error('Network error');
-      const data = await res.json();
-      
-      const latestVersion = data.tag_name ? data.tag_name.replace(/^v/i, '').trim() : currentVersion;
+      const dataSettings = await new Promise(res => chrome.storage.local.get(['checkBetaUpdates'], res));
+      const checkBeta = dataSettings.checkBetaUpdates === true;
+
+      let latestVersion = currentVersion;
+
+      if (checkBeta) {
+        // משיכת כלל הגרסאות כולל גרסאות בטא/קדם
+        const res = await fetch('https://api.github.com/repos/Tzadikvtovlo/PushBox/releases');
+        if (res.ok) {
+          const releases = await res.json();
+          if (Array.isArray(releases) && releases.length > 0) {
+            latestVersion = releases[0].tag_name ? releases[0].tag_name.replace(/^v/i, '').trim() : currentVersion;
+          }
+        }
+      } else {
+        // ברירת מחדל: בדיקת גרסה יציבה רשמית בלבד (שלא תתריע על גרסת בטא למשתמשים כלליים)
+        const res = await fetch('https://api.github.com/repos/Tzadikvtovlo/PushBox/releases/latest');
+        if (res.ok) {
+          const data = await res.json();
+          latestVersion = data.tag_name ? data.tag_name.replace(/^v/i, '').trim() : currentVersion;
+        }
+      }
 
       if (isNewerVersion(latestVersion, currentVersion)) {
         chrome.storage.local.set({ updateAvailable: true });
-        // שינוי הטקסט לתצוגה המפורטת כמו בתוסף 2
-        versionBox.textContent = `מותקן: v${currentVersion} | זמין: v${latestVersion}`;
+        versionBox.textContent = `מותקן: ${displayVersion} | זמין: v${latestVersion}`;
         versionBox.title = 'לחץ כאן להורדה';
         versionBox.style.direction = 'rtl';
         versionBox.classList.add('update');
@@ -60,11 +81,11 @@ document.addEventListener('DOMContentLoaded', () => {
           versionBox.textContent = 'אתה מעודכן';
           versionBox.style.direction = 'rtl';
           setTimeout(() => { 
-            versionBox.textContent = `v${currentVersion}`; 
+            versionBox.textContent = displayVersion; 
             versionBox.style.direction = 'ltr';
           }, 3000);
         } else {
-          versionBox.textContent = `v${currentVersion}`;
+          versionBox.textContent = displayVersion;
           versionBox.style.direction = 'ltr';
         }
       }
@@ -74,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
         versionBox.textContent = 'שגיאה בבדיקה';
         versionBox.style.direction = 'rtl';
         setTimeout(() => { 
-          versionBox.textContent = `v${currentVersion}`; 
+          versionBox.textContent = displayVersion; 
           versionBox.style.direction = 'ltr';
         }, 3000);
       }
@@ -91,6 +112,15 @@ document.addEventListener('DOMContentLoaded', () => {
       checkForUpdates(true);
     }
   };
+
+  const betaCheckEl = document.getElementById('checkBetaUpdates');
+  if (betaCheckEl) {
+    betaCheckEl.addEventListener('change', () => {
+      chrome.storage.local.set({ checkBetaUpdates: betaCheckEl.checked }, () => {
+        checkForUpdates(false);
+      });
+    });
+  }
 
   // בדיקה אוטומטית בפתיחת הדף
   checkForUpdates();
@@ -180,6 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const token = document.getElementById('token').value.trim();
     const interval = document.getElementById('interval').value;
     const notificationStyle = document.getElementById('notificationStyle').value; 
+    const checkBetaUpdates = document.getElementById('checkBetaUpdates') ? document.getElementById('checkBetaUpdates').checked : false;
     
     if (!token) {
        showBtnFeedback('save', 'הזן טוקן!', 'error');
@@ -189,7 +220,8 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.storage.local.set({ 
       token: token, 
       interval: interval, 
-      notificationStyle: notificationStyle 
+      notificationStyle: notificationStyle,
+      checkBetaUpdates: checkBetaUpdates
     }, async () => {
        showBtnFeedback('save', 'נשמר בהצלחה!', 'success');
        
