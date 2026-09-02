@@ -24,8 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const versionBox = document.getElementById('versionBox');
-  const manifest = chrome.runtime.getManifest ? chrome.runtime.getManifest() : { version: '4.9' };
-  const currentVersion = manifest.version || '4.9';
+  const manifest = chrome.runtime.getManifest ? chrome.runtime.getManifest() : { version: '4.91' };
+  const currentVersion = manifest.version || '4.91';
   const displayVersion = `v${currentVersion} (בטא)`;
   versionBox.textContent = displayVersion;
   versionBox.style.direction = 'ltr';

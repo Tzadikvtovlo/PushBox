@@ -2,20 +2,6 @@ name: Create Release ZIP
 
 on:
   workflow_dispatch:
-    inputs:
-      channel:
-        description: 'ערוץ שחרור: בטא (מתיקיית beta) או יציב (מקבצי הבסיס)'
-        type: choice
-        options:
-          - beta
-          - stable
-        default: 'beta'
-        required: true
-      is_prerelease:
-        description: 'סמן כ-Pre-release (בטא - מונע התראות למי שלא בחר עדכוני בטא)'
-        type: boolean
-        required: true
-        default: true
 
 permissions:
   contents: write
@@ -27,66 +13,45 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # חובה כדי להביא את ההיסטוריה ואת כל התגיות
 
-      - name: Determine Target Directory and Version
+      # חישוב הגרסה הסופית כולל בדיקת כפילויות והוספת תת-גרסה במידת הצורך
+      - name: Determine Release Version
         id: get_version
         run: |
-          CHANNEL="${{ github.event.inputs.channel || 'beta' }}"
-          echo "Selected channel: $CHANNEL"
-          
-          if [ "$CHANNEL" = "beta" ]; then
-            TARGET_DIR="beta"
-            MANIFEST_PATH="beta/manifest.json"
-            TAG_SUFFIX="-beta"
-            RELEASE_TITLE_SUFFIX=" (Beta)"
-          else
-            TARGET_DIR="."
-            MANIFEST_PATH="manifest.json"
-            TAG_SUFFIX=""
-            RELEASE_TITLE_SUFFIX=""
-          fi
-          
-          BASE_VERSION=$(jq -r '.version' "$MANIFEST_PATH")
-          echo "Base version from $MANIFEST_PATH: $BASE_VERSION"
+          BASE_VERSION=$(jq -r '.version' manifest.json)
+          echo "Base version from manifest: $BASE_VERSION"
 
-          TAG_NAME="v${BASE_VERSION}${TAG_SUFFIX}"
-          
-          if git show-ref --tags "refs/tags/$TAG_NAME" --quiet; then
-            echo "Tag $TAG_NAME exists. Finding next available sub-version..."
+          # בדיקה אם התגית הבסיסית כבר קיימת
+          if git show-ref --tags "refs/tags/v$BASE_VERSION" --quiet; then
+            echo "Tag v$BASE_VERSION exists. Finding next available sub-version..."
+            
+            # חיפוש תגיות קיימות עם תת-גרסה (למשל v4.0.0.1, v4.0.0.2) והבאת הגבוהה ביותר
             SAFE_BASE=$(echo "$BASE_VERSION" | sed 's/\./\\./g')
-            LATEST_SUB=$(git tag | grep -E "^v${SAFE_BASE}\.[0-9]+${TAG_SUFFIX}$" | sort -V | tail -n 1)
+            LATEST_SUB=$(git tag | grep -E "^v${SAFE_BASE}\.[0-9]+$" | sort -V | tail -n 1)
 
             if [ -z "$LATEST_SUB" ]; then
               FINAL_VERSION="${BASE_VERSION}.1"
             else
-              SUB_NUM=$(echo "$LATEST_SUB" | sed "s/${TAG_SUFFIX}$//" | awk -F. '{print $NF}')
+              SUB_NUM=$(echo "$LATEST_SUB" | awk -F. '{print $NF}')
               NEXT_SUB=$((SUB_NUM + 1))
               FINAL_VERSION="${BASE_VERSION}.${NEXT_SUB}"
             fi
           else
             FINAL_VERSION="$BASE_VERSION"
           fi
-
-          FINAL_TAG="v${FINAL_VERSION}${TAG_SUFFIX}"
+          
           echo "FINAL_VERSION=$FINAL_VERSION" >> $GITHUB_OUTPUT
-          echo "FINAL_TAG=$FINAL_TAG" >> $GITHUB_OUTPUT
-          echo "TARGET_DIR=$TARGET_DIR" >> $GITHUB_OUTPUT
-          echo "RELEASE_TITLE_SUFFIX=$RELEASE_TITLE_SUFFIX" >> $GITHUB_OUTPUT
-          echo "Resolved Tag: $FINAL_TAG"
+          echo "Resolved version: v$FINAL_VERSION"
 
+      # חילוץ הודעת הקומיט שבו שונה ה-manifest
       - name: Extract Release Notes
         id: get_notes
         run: |
-          CHANNEL="${{ github.event.inputs.channel || 'beta' }}"
-          if [ "$CHANNEL" = "beta" ]; then
-            COMMIT_MSG=$(git log -1 --pretty=format:"%B" -- beta/manifest.json)
-          else
-            COMMIT_MSG=$(git log -1 --pretty=format:"%B" -- manifest.json)
-          fi
-
+          COMMIT_MSG=$(git log -1 --pretty=format:"%B" -- manifest.json)
+          
           if [ -z "$COMMIT_MSG" ]; then
-            COMMIT_MSG="שחרור גרסה ${{ steps.get_version.outputs.FINAL_TAG }}"
+            COMMIT_MSG="עדכון גרסה חדשה"
           fi
 
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
@@ -94,30 +59,19 @@ jobs:
           echo "$COMMIT_MSG" >> $GITHUB_ENV
           echo "$EOF" >> $GITHUB_ENV
 
+      # יצירת קובץ ZIP בשם הפרויקט (קבצי הגרסה הרגילה)
       - name: Create ZIP archive
         run: |
-          CHANNEL="${{ github.event.inputs.channel || 'beta' }}"
-          ZIP_NAME="${{ github.event.repository.name }}-v${{ steps.get_version.outputs.FINAL_VERSION }}${{ steps.get_version.outputs.RELEASE_TITLE_SUFFIX }}.zip"
-          ZIP_NAME=$(echo "$ZIP_NAME" | tr -d ' ' | tr -d '(' | tr -d ')')
+          zip -r "${{ github.event.repository.name }}.zip" . -x "*.git*" "beta/*" "server.js" "chrome-polyfill.js" "index.html" "package.json" "bun.lock" "metadata.json" "node_modules/*" "*.bat" "*.sh"
 
-          if [ "$CHANNEL" = "beta" ]; then
-            echo "Packaging beta directory..."
-            cd beta && zip -r "../$ZIP_NAME" . -x "*.git*" && cd ..
-          else
-            echo "Packaging root stable files..."
-            zip -r "$ZIP_NAME" . -x "*.git*" "beta/*" "server.js" "chrome-polyfill.js" "index.html" "package.json" "bun.lock" "metadata.json" "node_modules/*"
-          fi
-
-          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
-          echo "Archive created: $ZIP_NAME"
-
+      # יצירת ה-Release ב-GitHub
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2.1.0
         with:
-          tag_name: "${{ steps.get_version.outputs.FINAL_TAG }}"
-          name: "Release ${{ steps.get_version.outputs.FINAL_TAG }}${{ steps.get_version.outputs.RELEASE_TITLE_SUFFIX }}"
+          tag_name: "v${{ steps.get_version.outputs.FINAL_VERSION }}"
+          name: "Release v${{ steps.get_version.outputs.FINAL_VERSION }}"
           body: "${{ env.RELEASE_NOTES }}"
-          files: "${{ env.ZIP_NAME }}"
-          prerelease: ${{ github.event.inputs.is_prerelease != 'false' }}
+          files: "${{ github.event.repository.name }}.zip"
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

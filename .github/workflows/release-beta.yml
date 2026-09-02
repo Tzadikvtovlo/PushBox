@@ -1,0 +1,80 @@
+name: Create Beta Release ZIP
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      # חישוב גרסת הבטא מתוך beta/manifest.json
+      - name: Determine Beta Release Version
+        id: get_version
+        run: |
+          BASE_VERSION=$(jq -r '.version' beta/manifest.json)
+          echo "Base beta version: $BASE_VERSION"
+
+          TAG_PREFIX="v${BASE_VERSION}-beta"
+          if git show-ref --tags "refs/tags/$TAG_PREFIX" --quiet; then
+            echo "Tag $TAG_PREFIX exists. Finding next available sub-version..."
+            SAFE_BASE=$(echo "$BASE_VERSION" | sed 's/\./\\./g')
+            LATEST_SUB=$(git tag | grep -E "^v${SAFE_BASE}\.[0-9]+-beta$" | sort -V | tail -n 1)
+
+            if [ -z "$LATEST_SUB" ]; then
+              FINAL_VERSION="${BASE_VERSION}.1"
+            else
+              SUB_NUM=$(echo "$LATEST_SUB" | sed 's/-beta$//' | awk -F. '{print $NF}')
+              NEXT_SUB=$((SUB_NUM + 1))
+              FINAL_VERSION="${BASE_VERSION}.${NEXT_SUB}"
+            fi
+          else
+            FINAL_VERSION="$BASE_VERSION"
+          fi
+
+          FINAL_TAG="v${FINAL_VERSION}-beta"
+          echo "FINAL_VERSION=$FINAL_VERSION" >> $GITHUB_OUTPUT
+          echo "FINAL_TAG=$FINAL_TAG" >> $GITHUB_OUTPUT
+          echo "Resolved Beta Tag: $FINAL_TAG"
+
+      # חילוץ הודעת הקומיט שבו שונה beta/manifest.json
+      - name: Extract Beta Release Notes
+        id: get_notes
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=format:"%B" -- beta/manifest.json)
+          if [ -z "$COMMIT_MSG" ]; then
+            COMMIT_MSG="שחרור גרסת בטא חדשה (${{ steps.get_version.outputs.FINAL_TAG }})"
+          fi
+
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "RELEASE_NOTES<<$EOF" >> $GITHUB_ENV
+          echo "$COMMIT_MSG" >> $GITHUB_ENV
+          echo "$EOF" >> $GITHUB_ENV
+
+      # יצירת קובץ ZIP של תיקיית הבטא בלבד
+      - name: Create Beta ZIP archive
+        run: |
+          ZIP_NAME="${{ github.event.repository.name }}-v${{ steps.get_version.outputs.FINAL_VERSION }}-Beta.zip"
+          ZIP_NAME=$(echo "$ZIP_NAME" | tr -d ' ')
+          echo "Packaging beta folder..."
+          cd beta && zip -r "../$ZIP_NAME" . -x "*.git*" && cd ..
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+
+      # יצירת ה-Release ב-GitHub מסומן כ-Pre-release (בטא בהורדות המאגר)
+      - name: Create GitHub Beta Release
+        uses: softprops/action-gh-release@v2.1.0
+        with:
+          tag_name: "${{ steps.get_version.outputs.FINAL_TAG }}"
+          name: "Release ${{ steps.get_version.outputs.FINAL_TAG }} (Beta)"
+          body: "${{ env.RELEASE_NOTES }}"
+          files: "${{ env.ZIP_NAME }}"
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

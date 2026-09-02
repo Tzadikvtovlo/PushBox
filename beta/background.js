@@ -1,4 +1,4 @@
-console.log("=== PushBox 4.9 (Beta) Background Service Worker Loaded ===");
+console.log("=== PushBox 4.91 (Beta) Background Service Worker Loaded ===");
 
 const ALARM_NAME = 'checkYemotSmsAlarm';
 
@@ -18,7 +18,7 @@ updateBadgeAndTooltip();
 
 function setCheckingBadge() {
   chrome.action.setBadgeText({ text: "..." });
-  chrome.action.setBadgeBackgroundColor({ color: '#4f46e5' });
+  chrome.action.setBadgeBackgroundColor({ color: '#1e3a8a' });
   chrome.action.setTitle({ title: "בודק הודעות חדשות..." });
 }
 
@@ -30,8 +30,8 @@ function updateBadgeAndTooltip() {
     const notificationStyle = data.notificationStyle || "both";
 
     let text = "";
-    let bgColor = "#4f46e5";
-    let title = "PushBox 4.9 בטא";
+    let bgColor = "#1e3a8a";
+    let title = "PushBox 4.91 בטא";
 
     if (unreadCount > 0 && (notificationStyle === 'both' || notificationStyle === 'badge')) {
       text = String(unreadCount);

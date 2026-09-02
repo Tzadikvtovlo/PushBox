@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PushBox - תצוגה מקדימה וסביבת בדיקות (גרסת בטא 4.9 וגרסת מאגר 4.6)</title>
+  <title>PushBox - תצוגה מקדימה וסביבת בדיקות (גרסת בטא 4.91 וגרסת מאגר 4.6)</title>
   <script src="chrome-polyfill.js"></script>
   <link rel="icon" type="image/png" href="icon48.png">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     :root {
       --primary: #4f46e5;
@@ -330,17 +331,17 @@
       <div class="brand-info">
         <h1>
           PushBox
-          <span id="activeChannelBadge" class="channel-badge beta">4.9 בטא</span>
+          <span id="activeChannelBadge" class="channel-badge beta">4.91 בטא</span>
         </h1>
         <p>קבלת, שליחה וניהול SMS מימות המשיח ישירות לדפדפן</p>
       </div>
     </div>
 
-    <!-- מתג בחירה בין גרסת בטא 4.9 לגרסת מאגר 4.6 -->
+    <!-- מתג בחירה בין גרסת בטא 4.91 לגרסת מאגר 4.6 -->
     <div class="channel-switch-group">
-      <button id="btnChannelBeta" class="channel-btn active" title="הצג את גרסת 4.9 בטא מתיקיית beta">
+      <button id="btnChannelBeta" class="channel-btn active" title="הצג את גרסת 4.91 בטא מתיקיית beta">
         <svg class="icon-svg" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-        PushBox 4.9 בטא
+        PushBox 4.91 בטא
         <span class="channel-badge beta">בטא</span>
       </button>
       <button id="btnChannelStable" class="channel-btn" title="הצג את גרסת 4.6 המקורית מקבצי הבסיס">
@@ -379,7 +380,7 @@
       <div class="panel-box">
         <h3>
           <svg class="icon-svg" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-          הפרדת גרסאות מאגר וגרסת בטא 4.9
+          הפרדת גרסאות מאגר וגרסת בטא 4.91
         </h3>
         <div class="feature-list">
           <div class="feature-item">
@@ -388,7 +389,7 @@
           </div>
           <div class="feature-item">
             <svg class="icon-svg feature-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            <span><strong>גרסת בטא 4.9 שוכנת בתיקייה ייעודית <code>beta/</code>:</strong> כוללת שליחת SMS, לקריאה בהמשך (Snooze), בחירת ערוצי עדכון, ואייקונים אלגנטיים.</span>
+            <span><strong>גרסת בטא 4.91 שוכנת בתיקייה ייעודית <code>beta/</code>:</strong> מעוצבת בדיוק באותו קו עיצובי של גרסה 4.6 המקורית, וכוללת שליחת SMS, לקריאה בהמשך (Snooze), ובחירת ערוצי עדכון.</span>
           </div>
           <div class="feature-item">
             <svg class="icon-svg feature-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -421,6 +422,50 @@
         </div>
       </div>
 
+      <!-- יצירה והורדת קובצי ZIP -->
+      <div class="panel-box">
+        <h3>
+          <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          יצירת קובצי ZIP לגרסת בטא (בהורדות)
+        </h3>
+        <p style="font-size: 13px; color: var(--text-muted);">
+          נוספו קובצי הרצה ייעודיים להפקת קובץ ZIP של גרסת הבטא ישירות לתיקיית ההורדות:
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- הורדה ישירה לתיקיית ההורדות בדפדפן -->
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button id="btnDownloadBetaZip" class="btn btn-primary" style="flex: 1; min-width: 220px;">
+              <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              הורד ZIP של גרסת בטא (4.91)
+            </button>
+            <button id="btnDownloadStableZip" class="btn" style="flex: 1; min-width: 220px;">
+              <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              הורד ZIP של גרסה יציבה (4.6)
+            </button>
+          </div>
+
+          <div style="border-top: 1px solid var(--border); padding-top: 10px; font-size: 13px;">
+            <strong>קובצי הרצה שנוספו למאגר:</strong>
+            <ul style="padding-right: 20px; margin-top: 6px; color: #334155; line-height: 1.6;">
+              <li>
+                <strong>קובץ הרצה ב-GitHub Actions:</strong>
+                <code>.github/workflows/release-beta.yml</code> (Create Beta Release ZIP) — מייצר זיפ של גרסת הבטא ומפרסם אותו בלשונית Releases (הורדות) של המאגר.
+              </li>
+              <li>
+                <strong>קובץ הרצה מקומי לווינדוס:</strong>
+                <a href="/create-beta-zip.bat" download style="color: var(--primary); font-weight: 600; text-decoration: underline;">create-beta-zip.bat</a> — לחיצה כפולה עליו יוצרת מיד את <code>PushBox-v4.91-Beta.zip</code> בתיקיית ה-Downloads של המחשב.
+              </li>
+              <li>
+                <strong>קובץ הרצה ל-Linux/Mac:</strong>
+                <code>create-beta-zip.sh</code> — יוצר את ה-ZIP ב-<code>~/Downloads</code>.
+              </li>
+            </ul>
+          </div>
+          <div id="zipStatus" style="font-size: 12px; color: var(--primary); display: none;"></div>
+        </div>
+      </div>
+
       <!-- בדיקת ערוץ עדכונים -->
       <div class="panel-box">
         <h3>
@@ -428,7 +473,7 @@
           הגדרת ערוץ עדכון בבטא
         </h3>
         <p style="font-size: 13px; color: var(--text-muted);">
-          בדף ההגדרות של גרסה 4.9 נוספה תיבת בחירה של:
+          בדף ההגדרות של גרסה 4.91 נוספה תיבת בחירה של:
         </p>
         <ul style="font-size: 13px; color: #334155; padding-right: 20px; line-height: 1.6;">
           <li><strong>התראה על עדכון רגיל:</strong> בודק ב-GitHub רק שחרורים יציבים רשמיים.</li>
@@ -461,7 +506,7 @@
       currentChannel = 'beta';
       btnBeta.classList.add('active');
       btnStable.classList.remove('active');
-      channelBadge.textContent = '4.9 בטא';
+      channelBadge.textContent = '4.91 בטא';
       channelBadge.className = 'channel-badge beta';
       updateFrameSrc();
     });
@@ -521,6 +566,74 @@
     document.getElementById('btnPresetPost')?.addEventListener('click', () => {
       document.getElementById('simSource').value = 'Postal-IL';
       document.getElementById('simMessage').value = 'חבילה ממתינה עבורך בסניף המרכזי. קוד איסוף: 51042.';
+    });
+
+    // יצירה והורדת ZIP ישירות לתיקיית ההורדות של המשתמש
+    async function downloadExtensionZip(isBeta) {
+      const statusEl = document.getElementById('zipStatus');
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'מכין את קבצי ה-ZIP להורדה...';
+
+      try {
+        const zip = new JSZip();
+        const prefix = isBeta ? 'beta/' : '';
+        const zipName = isBeta ? 'PushBox-v4.91-Beta.zip' : 'PushBox-v4.6.zip';
+
+        const filesToPack = [
+          'manifest.json',
+          'popup.html',
+          'popup.js',
+          'options.html',
+          'options.js',
+          'filters.html',
+          'filters.js',
+          'background.js',
+          'offscreen.html',
+          'offscreen.js',
+          'icon16.png',
+          'icon48.png',
+          'icon128.png'
+        ];
+
+        for (const file of filesToPack) {
+          statusEl.textContent = `דוחס את ${file}...`;
+          const res = await fetch(`${prefix}${file}`);
+          if (!res.ok) continue;
+
+          if (file.endsWith('.png')) {
+            const blob = await res.blob();
+            zip.file(file, blob);
+          } else {
+            const text = await res.text();
+            zip.file(file, text);
+          }
+        }
+
+        statusEl.textContent = 'יוצר את קובץ ה-ZIP הסופי...';
+        const zipContent = await zip.generateAsync({ type: 'blob' });
+        
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(zipContent);
+        a.download = zipName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+
+        statusEl.textContent = `קובץ ה-ZIP (${zipName}) הורד בהצלחה לתיקיית ההורדות!`;
+        setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+      } catch (err) {
+        console.error('ZIP error:', err);
+        statusEl.textContent = 'שגיאה ביצירת קובץ ה-ZIP: ' + err.message;
+      }
+    }
+
+    document.getElementById('btnDownloadBetaZip')?.addEventListener('click', () => {
+      downloadExtensionZip(true);
+    });
+
+    document.getElementById('btnDownloadStableZip')?.addEventListener('click', () => {
+      downloadExtensionZip(false);
     });
   </script>
 </body>

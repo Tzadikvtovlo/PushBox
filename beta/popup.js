@@ -2,38 +2,23 @@ let currentSearchQuery = "";
 let currentFilters = [];
 let deletedMessages = [];
 let isTrashView = false;
-let allMessages = []; 
+let allMessages = [];
 let isAllCollapsed = false;
 let activeTab = "all"; // all, unread, snoozed, sent
 let periodicCheckInterval = null;
-
-// אייקונים וקטוריים אלגנטיים
-const SVG_ICONS = {
-  reply: `<svg class="icon-svg" viewBox="0 0 24 24"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>`,
-  snooze: `<svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
-  mail: `<svg class="icon-svg" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>`,
-  copy: `<svg class="icon-svg" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`,
-  trash: `<svg class="icon-svg" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`,
-  restore: `<svg class="icon-svg" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>`,
-  send: `<svg class="icon-svg" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`
-};
 
 document.addEventListener('DOMContentLoaded', () => {
   // איפוס מונה בלתי נקראים בעת פתיחה
   chrome.storage.local.set({ unreadCount: 0 });
 
-  // בדיקת עדכונים לפי הגדרות המשתמש
+  // טיפול בבאנר של התרעה על עדכון זמין
   checkVersionUpdate();
 
-  // טעינת מספר מערכת
+  // משיכת מספר מערכת
   chrome.storage.local.get(['phoneNumber'], (data) => {
     if (data.phoneNumber && data.phoneNumber !== "לא אותר מספר אוטומטית" && data.phoneNumber !== "שגיאה בשליפת המספר") {
-      const phoneContainer = document.getElementById('systemPhone');
-      const phoneText = document.getElementById('systemPhoneText');
-      if (phoneContainer && phoneText) {
-        phoneText.textContent = data.phoneNumber;
-        phoneContainer.style.display = 'inline-flex';
-      }
+      const phoneEl = document.getElementById('systemPhone');
+      if (phoneEl) phoneEl.textContent = data.phoneNumber;
     }
   });
 
@@ -49,25 +34,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // כפתור הגדרות
-  document.getElementById('optionsBtn')?.addEventListener('click', () => {
-    if (chrome.runtime && chrome.runtime.openOptionsPage) {
-      chrome.runtime.openOptionsPage();
-    } else {
-      window.open('options.html', '_blank');
-    }
+  // פתיחת חלונית שליחת SMS
+  document.getElementById('openSendSmsBtn')?.addEventListener('click', () => {
+    openSendSmsModal();
   });
-
-  // פתיחת / סגירת ממשק שליחת SMS
-  const openSendSmsBtn = document.getElementById('openSendSmsBtn');
-  const closeSendSmsBtn = document.getElementById('closeSendSmsBtn');
-  const cancelSendBtn = document.getElementById('cancelSendBtn');
-  const clearSmsTextBtn = document.getElementById('clearSmsText');
-
-  openSendSmsBtn?.addEventListener('click', () => toggleSendSmsView(true));
-  closeSendSmsBtn?.addEventListener('click', () => toggleSendSmsView(false));
-  cancelSendBtn?.addEventListener('click', () => toggleSendSmsView(false));
-  clearSmsTextBtn?.addEventListener('click', () => {
+  document.getElementById('closeSendSmsModal')?.addEventListener('click', () => {
+    closeSendSmsModal();
+  });
+  document.getElementById('cancelSendSmsBtn')?.addEventListener('click', () => {
+    closeSendSmsModal();
+  });
+  document.getElementById('clearSmsTextBtn')?.addEventListener('click', () => {
     const txt = document.getElementById('smsMessageText');
     if (txt) {
       txt.value = '';
@@ -75,79 +52,68 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ספירת תווים בטופס שליחת SMS
-  const smsMessageInput = document.getElementById('smsMessageText');
-  const charCounterEl = document.getElementById('smsCharCounter');
-  if (smsMessageInput && charCounterEl) {
-    smsMessageInput.addEventListener('input', () => {
-      updateCharCounter(smsMessageInput.value, charCounterEl);
+  // ספירת תווים בחלונית SMS
+  const smsText = document.getElementById('smsMessageText');
+  const charCounter = document.getElementById('smsCharCounter');
+  if (smsText && charCounter) {
+    smsText.addEventListener('input', () => {
+      updateCharCounter(smsText.value, charCounter);
     });
   }
 
-  // הגשת טופס שליחת SMS
-  document.getElementById('sendSmsForm')?.addEventListener('submit', (e) => {
-    e.preventDefault();
+  // הגשת שליחת SMS
+  document.getElementById('submitSendSmsBtn')?.addEventListener('click', () => {
     handleSendSmsSubmit();
   });
 
-  // סרגל חיפוש
+  // חיפוש הודעות
   const searchInput = document.getElementById('searchInput');
-  const clearSearchBtn = document.getElementById('clearSearchBtn');
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
-      currentSearchQuery = e.target.value.trim().toLowerCase();
-      if (clearSearchBtn) clearSearchBtn.style.display = currentSearchQuery ? 'flex' : 'none';
+      currentSearchQuery = e.target.value.toLowerCase().trim();
       renderMessages();
     });
   }
-  clearSearchBtn?.addEventListener('click', () => {
-    if (searchInput) {
-      searchInput.value = '';
-      currentSearchQuery = '';
-      clearSearchBtn.style.display = 'none';
-      renderMessages();
-    }
-  });
 
-  // לשוניות סינון
-  const tabButtons = document.querySelectorAll('.tab-btn');
-  tabButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tab = btn.getAttribute('data-tab');
-      activeTab = tab;
-      
-      tabButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+  // צמצום והרחבת כל ההודעות
+  document.getElementById('toggleAllBtn')?.addEventListener('click', () => {
+    isAllCollapsed = !isAllCollapsed;
+    const bodies = document.querySelectorAll('.msg-body');
+    const svgs = document.querySelectorAll('.collapse-btn svg');
 
-      // יציאה ממצב סל מחזור
-      if (isTrashView) {
-        isTrashView = false;
-        const trashHeader = document.getElementById('trashHeader');
-        if (trashHeader) trashHeader.style.display = 'none';
-        const trashBtn = document.getElementById('trashBtn');
-        if (trashBtn) trashBtn.classList.remove('active');
+    bodies.forEach(body => {
+      if (isAllCollapsed) {
+        body.classList.add('collapsed');
+      } else {
+        body.classList.remove('collapsed');
       }
+    });
 
-      // סגירת פאנל שליחת SMS אם היה פתוח
-      toggleSendSmsView(false);
-
-      renderMessages();
+    svgs.forEach(svg => {
+      svg.style.transform = isAllCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
     });
   });
 
-  // כפתור סל מחזור
-  const trashBtn = document.getElementById('trashBtn');
-  trashBtn?.addEventListener('click', () => {
+  // סל מחזור
+  document.getElementById('trashBtn')?.addEventListener('click', () => {
     isTrashView = !isTrashView;
     const trashHeader = document.getElementById('trashHeader');
     if (trashHeader) trashHeader.style.display = isTrashView ? 'flex' : 'none';
-    trashBtn.classList.toggle('active', isTrashView);
 
+    const tBtn = document.getElementById('trashBtn');
+    if (tBtn) {
+      tBtn.style.background = isTrashView ? '#f3e8ff' : '#ffffff';
+      tBtn.style.borderColor = isTrashView ? '#d8b4fe' : 'var(--border)';
+      tBtn.style.color = isTrashView ? 'var(--primary)' : 'var(--text-muted)';
+    }
+
+    // אם נכנסים לסל מחזור, מבטלים הדגשת לשונית
+    const chips = document.querySelectorAll('.tab-chip');
     if (isTrashView) {
-      tabButtons.forEach(b => b.classList.remove('active'));
+      chips.forEach(c => c.classList.remove('active'));
     } else {
-      const currentTabEl = document.querySelector(`.tab-btn[data-tab="${activeTab}"]`);
-      if (currentTabEl) currentTabEl.classList.add('active');
+      const activeChip = document.querySelector(`.tab-chip[data-tab="${activeTab}"]`);
+      if (activeChip) activeChip.classList.add('active');
     }
 
     renderMessages();
@@ -156,26 +122,45 @@ document.addEventListener('DOMContentLoaded', () => {
   // ריקון סל מחזור
   document.getElementById('emptyTrashBtn')?.addEventListener('click', () => {
     if (confirm('האם לרוקן את סל המחזור לחלוטין?')) {
-      chrome.storage.local.get(['deletedMessages'], (data) => {
-        chrome.storage.local.set({ deletedMessages: [] }, () => {
-          deletedMessages = [];
-          renderMessages();
-        });
+      chrome.storage.local.set({ deletedMessages: [] }, () => {
+        deletedMessages = [];
+        renderMessages();
       });
     }
   });
 
-  // צמצום / הרחבת הכל
-  const toggleAllBtn = document.getElementById('toggleAllBtn');
-  toggleAllBtn?.addEventListener('click', () => {
-    isAllCollapsed = !isAllCollapsed;
-    const bodies = document.querySelectorAll('.card-body');
-    bodies.forEach(b => {
-      b.style.display = isAllCollapsed ? 'none' : 'block';
+  // לשוניות סינון (הכל / לא נקראו / בהמשך / נשלחו)
+  const tabChips = document.querySelectorAll('.tab-chip');
+  tabChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      activeTab = chip.getAttribute('data-tab');
+      tabChips.forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+
+      if (isTrashView) {
+        isTrashView = false;
+        const trashHeader = document.getElementById('trashHeader');
+        if (trashHeader) trashHeader.style.display = 'none';
+        const tBtn = document.getElementById('trashBtn');
+        if (tBtn) {
+          tBtn.style.background = '#ffffff';
+          tBtn.style.borderColor = 'var(--border)';
+          tBtn.style.color = 'var(--text-muted)';
+        }
+      }
+
+      renderMessages();
     });
   });
 
-  // בדיקת פקיעת זמני לקריאה בהמשך (Snooze) וטעינת נתונים
+  // סגירת פופאובר Snooze בלחיצה מחוץ לתפריט
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.snooze-popover') && !e.target.closest('.snooze-btn')) {
+      document.querySelectorAll('.snooze-popover').forEach(p => p.remove());
+    }
+  });
+
+  // בדיקת תוקף Snooze וטעינת נתונים ראשונית
   checkExpiredSnoozes(() => {
     chrome.storage.local.get(['smsFilters', 'deletedMessages'], (data) => {
       currentFilters = data.smsFilters || [];
@@ -184,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // בדיקה מחזורית קלה של תוקף Snooze בזמן שהפופאפ פתוח
+  // בדיקה מחזורית קלה של תוקף Snooze
   periodicCheckInterval = setInterval(() => {
     checkExpiredSnoozes(() => {
       renderMessages();
@@ -192,23 +177,17 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 4000);
 });
 
-// סגירת תפריטי דרופדאון בלחיצה בחוץ
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('.card-actions')) {
-    document.querySelectorAll('.snooze-dropdown').forEach(d => d.style.display = 'none');
-  }
-});
-
-// בדיקת עדכון לפי ערוץ מוגדר
+// בדיקת עדכון זמין לפי ערוץ (בטא או רגיל)
 function checkVersionUpdate() {
-  chrome.storage.local.get(['updateChannel', 'checkBetaUpdates'], (data) => {
-    const channel = data.updateChannel || (data.checkBetaUpdates ? 'beta' : 'stable');
-    if (channel === 'none') return;
-
+  chrome.storage.local.get(['updateChannel', 'updateAvailable'], (data) => {
     const alertBox = document.getElementById('updateAlertBox');
     if (!alertBox) return;
 
-    const currentVersion = chrome.runtime.getManifest ? chrome.runtime.getManifest().version : '4.9';
+    const manifest = chrome.runtime.getManifest ? chrome.runtime.getManifest() : { version: '4.91' };
+    const currentVersion = manifest.version || '4.91';
+
+    const channel = data.updateChannel || 'beta';
+    if (channel === 'none') return;
 
     let targetUrl = 'https://api.github.com/repos/Tzadikvtovlo/PushBox/releases/latest';
     if (channel === 'beta') {
@@ -228,50 +207,55 @@ function checkVersionUpdate() {
 
         if (isNewer) {
           alertBox.style.display = 'block';
-          alertBox.textContent = `עדכון זמין! מותקן: v${currentVersion} | זמין להורדה: v${latestVersion}`;
+          alertBox.textContent = `יש עדכון! מותקן: v${currentVersion} | זמין: v${latestVersion}`;
+          alertBox.title = "לחץ כאן להורדה";
           alertBox.onclick = () => window.open('https://github.com/Tzadikvtovlo/PushBox/releases', '_blank');
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (data.updateAvailable) {
+          alertBox.style.display = 'block';
+          alertBox.textContent = "עדכון גרסה זמין! לחץ כאן להורדה";
+          alertBox.onclick = () => window.open('https://github.com/Tzadikvtovlo/PushBox/releases', '_blank');
+        }
+      });
   });
 }
 
-// פתיחה או סגירה של ממשק שליחת SMS
-function toggleSendSmsView(show, prefillPhone = '') {
-  const panel = document.getElementById('sendSmsPanel');
-  const list = document.getElementById('messagesList');
-  const recipientInput = document.getElementById('smsRecipient');
-  const callerIdInput = document.getElementById('smsCallerId');
-  const statusBanner = document.getElementById('sendSmsStatus');
-
-  if (!panel) return;
-
-  if (show) {
-    panel.style.display = 'flex';
-    if (list) list.style.display = 'none';
-
-    if (statusBanner) {
-      statusBanner.style.display = 'none';
-      statusBanner.className = 'status-msg';
-    }
-
-    if (prefillPhone && recipientInput) {
-      recipientInput.value = prefillPhone;
-    }
-
-    chrome.storage.local.get(['phoneNumber'], (data) => {
-      if (callerIdInput && data.phoneNumber && !callerIdInput.value) {
-        callerIdInput.value = data.phoneNumber;
+// טעינת הודעות ישירות משרתי ימות המשיח
+async function loadMessages() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['token'], async (data) => {
+      const container = document.getElementById('messagesList');
+      if (!data.token) {
+        if (container) {
+          container.innerHTML = '<div class="error">לא הוגדר טוקן במערכת. לחץ על הגדרות.</div>';
+        }
+        resolve();
+        return;
       }
-    });
 
-    if (recipientInput) {
-      setTimeout(() => recipientInput.focus(), 50);
-    }
-  } else {
-    panel.style.display = 'none';
-    if (list) list.style.display = 'flex';
-  }
+      try {
+        const url = `https://www.call2all.co.il/ym/api/GetIncomingSms?token=${encodeURIComponent(data.token)}&limit=50`;
+        const res = await fetch(url);
+        const result = await res.json();
+
+        if (result && result.responseStatus === 'OK') {
+          allMessages = result.rows || [];
+          renderMessages();
+        } else {
+          if (container) {
+            container.innerHTML = '<div class="error">שגיאה במשיכת נתונים או טוקן שגוי.</div>';
+          }
+        }
+      } catch (e) {
+        if (container) {
+          container.innerHTML = '<div class="error">שגיאת תקשורת מול השרת.</div>';
+        }
+      }
+      resolve();
+    });
+  });
 }
 
 // חישוב תווים וחלקים
@@ -290,12 +274,47 @@ function updateCharCounter(text, labelEl) {
   labelEl.textContent = `${len} תווים | חלק ${parts} (${langName})`;
 }
 
-// שליחת הודעת SMS מול השרת
+// פתיחת וסגירת מודאל שליחת SMS
+function openSendSmsModal(prefillPhone = '') {
+  const modal = document.getElementById('sendSmsModal');
+  const recipientInput = document.getElementById('smsRecipient');
+  const callerIdInput = document.getElementById('smsCallerId');
+  const statusEl = document.getElementById('sendSmsStatus');
+
+  if (statusEl) statusEl.style.display = 'none';
+
+  if (prefillPhone && recipientInput) {
+    recipientInput.value = prefillPhone;
+  }
+
+  chrome.storage.local.get(['phoneNumber'], (data) => {
+    if (callerIdInput && data.phoneNumber && !callerIdInput.value) {
+      callerIdInput.value = data.phoneNumber;
+    }
+  });
+
+  if (modal) modal.style.display = 'flex';
+  if (recipientInput) setTimeout(() => recipientInput.focus(), 80);
+}
+
+function closeSendSmsModal() {
+  const modal = document.getElementById('sendSmsModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function showSmsStatus(msg, type) {
+  const statusEl = document.getElementById('sendSmsStatus');
+  if (!statusEl) return;
+  statusEl.textContent = msg;
+  statusEl.className = `status-alert ${type}`;
+  statusEl.style.display = 'block';
+}
+
+// ביצוע שליחת ה-SMS
 function handleSendSmsSubmit() {
   const recipientInput = document.getElementById('smsRecipient');
   const callerIdInput = document.getElementById('smsCallerId');
   const messageInput = document.getElementById('smsMessageText');
-  const statusEl = document.getElementById('sendSmsStatus');
   const submitBtn = document.getElementById('submitSendSmsBtn');
 
   const phones = recipientInput ? recipientInput.value.trim() : '';
@@ -335,7 +354,7 @@ function handleSendSmsSubmit() {
       const result = await res.json();
 
       if (result && (result.responseStatus === 'OK' || result.status === 'success')) {
-        showSmsStatus('הודעת SMS נשלחה בהצלחה!', 'success');
+        showSmsStatus('הודעת ה-SMS נשלחה בהצלחה!', 'success');
 
         const now = new Date();
         const pad = (n) => String(n).padStart(2, '0');
@@ -353,14 +372,16 @@ function handleSendSmsSubmit() {
         chrome.storage.local.get(['sentMessages'], (sentData) => {
           const list = sentData.sentMessages || [];
           list.unshift(sentRecord);
-          chrome.storage.local.set({ sentMessages: list.slice(0, 100) });
+          chrome.storage.local.set({ sentMessages: list.slice(0, 100) }, () => {
+            if (activeTab === 'sent') renderMessages();
+          });
         });
 
         if (messageInput) messageInput.value = '';
         updateCharCounter('', document.getElementById('smsCharCounter'));
 
         setTimeout(() => {
-          toggleSendSmsView(false);
+          closeSendSmsModal();
           if (submitBtn) submitBtn.disabled = false;
         }, 1200);
       } else {
@@ -373,14 +394,6 @@ function handleSendSmsSubmit() {
       if (submitBtn) submitBtn.disabled = false;
     }
   });
-}
-
-function showSmsStatus(msg, type) {
-  const statusEl = document.getElementById('sendSmsStatus');
-  if (!statusEl) return;
-  statusEl.textContent = msg;
-  statusEl.className = `status-msg ${type}`;
-  statusEl.style.display = 'block';
 }
 
 // בדיקת Snooze שפג תוקפו
@@ -420,67 +433,12 @@ function checkExpiredSnoozes(callback) {
   });
 }
 
-// טעינת הודעות ישירות משרתי ימות המשיח
-async function loadMessages() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get(['token'], async (data) => {
-      const container = document.getElementById('messagesList');
-      if (!data.token) {
-        if (container) {
-          container.innerHTML = `
-            <div class="empty-state">
-              <span>לא הוגדר טוקן במערכת.</span>
-              <button id="goToOptionsBtn" class="btn-send-sms" style="margin-top: 8px;">פתח הגדרות</button>
-            </div>
-          `;
-          document.getElementById('goToOptionsBtn')?.addEventListener('click', () => {
-            if (chrome.runtime && chrome.runtime.openOptionsPage) {
-              chrome.runtime.openOptionsPage();
-            } else {
-              window.open('options.html', '_blank');
-            }
-          });
-        }
-        resolve();
-        return;
-      }
-
-      try {
-        const url = `https://www.call2all.co.il/ym/api/GetIncomingSms?token=${encodeURIComponent(data.token)}&limit=50`;
-        const res = await fetch(url);
-        const result = await res.json();
-
-        if (result && result.responseStatus === 'OK') {
-          allMessages = result.rows || [];
-          renderMessages();
-        } else {
-          if (container) {
-            container.innerHTML = `
-              <div class="empty-state">
-                <span>שגיאה במשיכת נתונים או טוקן שגוי.</span>
-              </div>
-            `;
-          }
-        }
-      } catch (e) {
-        if (container) {
-          container.innerHTML = `
-            <div class="empty-state">
-              <span>שגיאת תקשורת מול השרת: ${e.message}</span>
-            </div>
-          `;
-        }
-      }
-      resolve();
-    });
-  });
-}
-
-// רינדור רשימת הודעות
+// רינדור רשימת הודעות בעיצוב 4.6 המקורי
 function renderMessages() {
   const container = document.getElementById('messagesList');
   if (!container) return;
 
+  // אם בלשונית הודעות שנשלחו
   if (activeTab === 'sent') {
     renderSentMessages(container);
     return;
@@ -504,12 +462,18 @@ function renderMessages() {
     });
 
     const unreadBadge = document.getElementById('unreadCountBadge');
-    if (unreadBadge) unreadBadge.textContent = totalUnread;
+    if (unreadBadge) {
+      unreadBadge.textContent = totalUnread;
+      unreadBadge.classList.toggle('visible', totalUnread > 0);
+    }
 
     const snoozedBadge = document.getElementById('snoozedCountBadge');
-    if (snoozedBadge) snoozedBadge.textContent = totalSnoozed;
+    if (snoozedBadge) {
+      snoozedBadge.textContent = totalSnoozed;
+      snoozedBadge.classList.toggle('visible', totalSnoozed > 0);
+    }
 
-    let filtered = allMessages.filter(msg => {
+    let filteredMessages = allMessages.filter(msg => {
       const msgId = `${msg.receive_date}_${msg.source}`;
       const isDeleted = deletedMessages.includes(msgId);
 
@@ -531,28 +495,80 @@ function renderMessages() {
     });
 
     if (currentSearchQuery) {
-      filtered = filtered.filter(msg => 
-        msg.message.toLowerCase().includes(currentSearchQuery) || 
-        msg.source.toLowerCase().includes(currentSearchQuery)
+      filteredMessages = filteredMessages.filter(msg => 
+        (msg.message && msg.message.toLowerCase().includes(currentSearchQuery)) || 
+        (msg.source && msg.source.toLowerCase().includes(currentSearchQuery))
       );
     }
 
-    if (filtered.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <span>${isTrashView ? 'סל המחזור ריק' : 'אין הודעות להצגה'}</span>
-        </div>
-      `;
+    if (filteredMessages.length === 0) {
+      if (isTrashView) {
+        container.innerHTML = '<div class="empty">סל המחזור ריק.</div>';
+      } else if (activeTab === 'unread') {
+        container.innerHTML = '<div class="empty">אין הודעות שלא נקראו.</div>';
+      } else if (activeTab === 'snoozed') {
+        container.innerHTML = '<div class="empty">אין הודעות הממתינות לקריאה בהמשך.</div>';
+      } else {
+        container.innerHTML = '<div class="empty">אין הודעות המותאמות לסינון/לחיפוש.</div>';
+      }
       return;
     }
 
-    filtered.forEach(msg => {
+    filteredMessages.slice(0, 30).forEach(msg => {
+      const card = document.createElement('div');
       const msgId = `${msg.receive_date}_${msg.source}`;
       const isUnread = unreadItems.includes(msgId);
       const isSnoozed = !!snoozedItems[msgId];
 
-      const card = document.createElement('div');
-      card.className = `msg-card ${isUnread ? 'is-unread' : ''} ${isSnoozed ? 'is-snoozed' : ''}`;
+      card.className = `msg-card ${isUnread ? 'is-unread' : ''}`;
+
+      // זיהוי קוד אימות ספרתי
+      const codeMatch = msg.message.match(/\b\d{5,8}\b/);
+      let copyBtnHtml = '';
+      if (codeMatch) {
+        copyBtnHtml = `
+        <button class="btn-copy">
+          <span class="copy-inner">
+            <svg class="svg-icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            העתק קוד: <span class="code-highlight">${codeMatch[0]}</span>
+          </span>
+        </button>`;
+      } else {
+        copyBtnHtml = `
+        <button class="btn-copy">
+          <span class="copy-inner">
+            <svg class="svg-icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            העתק הודעה מלאה
+          </span>
+        </button>`;
+      }
+
+      // הפיכת קישורים לחיצים
+      let text = escapeHtml(msg.message || '');
+      text = text.replace(/[\r\n]+/g, '\n').trim();
+
+      const urlRegex = /(?:https?:\/\/)?(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{2,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)/gi;
+      const links = [];
+      text = text.replace(urlRegex, (url) => {
+        links.push(url);
+        return `__URL_${links.length - 1}__`;
+      });
+
+      text = text.replace(/__URL_(\d+)__/g, (match, index) => {
+        const url = links[index];
+        let cleanUrl = url.replace(/&amp;/g, '&');
+        let href = cleanUrl;
+        if (!href.match(/^https?:\/\//i)) {
+          href = 'https://' + href;
+        }
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color: var(--primary); text-decoration: underline; font-weight: bold; direction: ltr; display: inline-block;">${url}</a>`;
+      });
+
+      const displayMsg = text.replace(/\n/g, '<br>');
+
+      const deleteRestoreIcon = isTrashView ? 
+        `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>` : 
+        `<svg class="svg-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
 
       let remainingMinutes = 0;
       if (isSnoozed) {
@@ -561,117 +577,102 @@ function renderMessages() {
         remainingMinutes = Math.max(1, Math.round((wakeTime - Date.now()) / (60 * 1000)));
       }
 
+      const bodyClass = isAllCollapsed ? "msg-body collapsed" : "msg-body";
+      const rotateStyle = isAllCollapsed ? "transform: rotate(180deg);" : "";
+
       card.innerHTML = `
-        <div class="card-header">
-          <div class="sender-info">
-            <span class="unread-indicator" title="לא נקרא"></span>
-            <span class="sender-name">${escapeHtml(msg.source || 'ללא שולח')}</span>
-            <span class="msg-date">${escapeHtml(msg.receive_date || '')}</span>
+        <div class="msg-header">
+          <div class="msg-source-wrapper">
+            <span class="msg-source">${msg.source}</span>
+            ${isUnread ? `<span class="unread-dot" title="הודעה שלא נקראה"></span>` : ''}
+            ${isSnoozed ? `<span class="snooze-tag" title="תזכורת פעילה">🕒 ${remainingMinutes}ד'</span>` : ''}
           </div>
-          <div class="card-actions">
+          <div class="msg-controls">
             ${!isTrashView ? `
-              <button class="action-btn reply-btn" title="השב להודעה">
-                ${SVG_ICONS.reply}
+              <button class="ctrl-btn reply-btn" title="השב להודעה זו ב-SMS">
+                <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
               </button>
-              <button class="action-btn snooze-btn ${isSnoozed ? 'active' : ''}" title="לקריאה בהמשך">
-                ${SVG_ICONS.snooze}
+              <button class="ctrl-btn snooze-btn ${isSnoozed ? 'active' : ''}" title="הזכר לי מאוחר יותר (Snooze)">
+                <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               </button>
-              <button class="action-btn toggle-read-btn ${isUnread ? 'active' : ''}" title="${isUnread ? 'סמן כנקרא' : 'סמן כלא נקרא'}">
-                ${SVG_ICONS.mail}
+              <button class="ctrl-btn toggle-unread-btn ${isUnread ? 'active' : ''}" title="${isUnread ? 'סמן כנקרא' : 'סמן כלא נקרא'}">
+                <svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
               </button>
-              <button class="action-btn copy-btn" title="העתק תוכן">
-                ${SVG_ICONS.copy}
+              <button class="ctrl-btn filter-sender-btn" title="סנן שולח זה">
+                <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
               </button>
-              <button class="action-btn delete-btn danger" title="מחק">
-                ${SVG_ICONS.trash}
-              </button>
-            ` : `
-              <button class="action-btn restore-btn" title="שחזר הודעה">
-                ${SVG_ICONS.restore}
-              </button>
-            `}
+            ` : ''}
+            <button class="ctrl-btn collapse-btn" title="צמצם/הרחב">
+              <svg class="svg-icon" viewBox="0 0 24 24" style="${rotateStyle}"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <button class="ctrl-btn delete-btn" title="${isTrashView ? 'שחזר הודעה' : 'מחק הודעה'}">
+              ${deleteRestoreIcon}
+            </button>
           </div>
+          <div class="msg-date-wrapper"><span class="msg-date">${msg.receive_date}</span></div>
         </div>
-
-        ${isSnoozed ? `
-          <div class="snooze-info-badge">
-            <span>לקריאה בהמשך בעוד כ-${remainingMinutes} דקות</span>
-            <button class="snooze-wake-btn" data-msg-id="${msgId}">בטל והחזר כעת</button>
-          </div>
-        ` : ''}
-
-        <div class="card-body" style="display: ${isAllCollapsed ? 'none' : 'block'};">
-          ${escapeHtml(msg.message)}
-        </div>
-
-        <div class="snooze-dropdown">
-          <button class="snooze-option" data-mins="10">בעוד 10 דקות</button>
-          <button class="snooze-option" data-mins="30">בעוד 30 דקות</button>
-          <button class="snooze-option" data-mins="60">בעוד שעה</button>
-          <button class="snooze-option" data-mins="120">בעוד שעתיים</button>
-          <button class="snooze-option" data-mins="240">בעוד 4 שעות</button>
-          <button class="snooze-option" data-mins="tomorrow">מחר בבוקר (09:00)</button>
-        </div>
+        <div class="${bodyClass}">${displayMsg}</div>
+        ${copyBtnHtml}
       `;
 
-      // אירועי פעולות
-      const replyBtn = card.querySelector('.reply-btn');
-      replyBtn?.addEventListener('click', (e) => {
+      // השב ב-SMS
+      card.querySelector('.reply-btn')?.addEventListener('click', (e) => {
         e.stopPropagation();
-        toggleSendSmsView(true, msg.source);
+        openSendSmsModal(msg.source);
       });
 
-      const toggleReadBtn = card.querySelector('.toggle-read-btn');
-      toggleReadBtn?.addEventListener('click', (e) => {
+      // תפריט Snooze
+      card.querySelector('.snooze-btn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleSnoozePopover(card, msgId, isSnoozed);
+      });
+
+      // שינוי מצב נקרא / לא נקרא
+      card.querySelector('.toggle-unread-btn')?.addEventListener('click', (e) => {
         e.stopPropagation();
         toggleReadStatus(msgId);
       });
 
-      const copyBtn = card.querySelector('.copy-btn');
-      copyBtn?.addEventListener('click', (e) => {
+      // מסנן שולח
+      card.querySelector('.filter-sender-btn')?.addEventListener('click', (e) => {
         e.stopPropagation();
-        navigator.clipboard.writeText(msg.message);
-        copyBtn.style.color = 'var(--primary)';
-        setTimeout(() => copyBtn.style.color = '', 1000);
+        if (chrome.tabs && chrome.tabs.create) {
+          chrome.tabs.create({ url: `filters.html?sender=${encodeURIComponent(msg.source)}` });
+        } else {
+          window.open(`filters.html?sender=${encodeURIComponent(msg.source)}`, '_blank');
+        }
       });
 
-      const deleteBtn = card.querySelector('.delete-btn');
-      deleteBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        deleteMessage(msgId);
+      // צמצום והרחבה
+      card.querySelector('.collapse-btn')?.addEventListener('click', () => {
+        const body = card.querySelector('.msg-body');
+        const svg = card.querySelector('.collapse-btn svg');
+        const isCollapsed = body.classList.toggle('collapsed');
+        svg.style.transform = isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
       });
 
-      const restoreBtn = card.querySelector('.restore-btn');
-      restoreBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        restoreMessage(msgId);
-      });
-
-      // דרופדאון נודניק
-      const snoozeBtn = card.querySelector('.snooze-btn');
-      const snoozeDropdown = card.querySelector('.snooze-dropdown');
-      snoozeBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        document.querySelectorAll('.snooze-dropdown').forEach(d => {
-          if (d !== snoozeDropdown) d.style.display = 'none';
-        });
-        snoozeDropdown.style.display = snoozeDropdown.style.display === 'flex' ? 'none' : 'flex';
-      });
-
-      const snoozeOptions = card.querySelectorAll('.snooze-option');
-      snoozeOptions.forEach(opt => {
-        opt.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const minsVal = opt.getAttribute('data-mins');
-          applySnooze(msgId, msg, minsVal);
-          snoozeDropdown.style.display = 'none';
+      // מחיקה או שחזור
+      card.querySelector('.delete-btn')?.addEventListener('click', () => {
+        if (isTrashView) {
+          deletedMessages = deletedMessages.filter(id => id !== msgId);
+        } else {
+          if (!deletedMessages.includes(msgId)) {
+            deletedMessages.push(msgId);
+          }
+        }
+        chrome.storage.local.set({ deletedMessages: deletedMessages }, () => {
+          renderMessages();
         });
       });
 
-      const wakeBtn = card.querySelector('.snooze-wake-btn');
-      wakeBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        wakeSnoozedMessage(msgId);
+      // כפתור העתקה
+      card.querySelector('.btn-copy')?.addEventListener('click', (e) => {
+        const textToCopy = codeMatch ? codeMatch[0] : msg.message;
+        navigator.clipboard.writeText(textToCopy);
+        const copyInner = e.currentTarget.querySelector('.copy-inner');
+        const originalHtml = copyInner.innerHTML;
+        copyInner.innerHTML = 'הועתק בהצלחה!';
+        setTimeout(() => copyInner.innerHTML = originalHtml, 1500);
       });
 
       container.appendChild(card);
@@ -679,172 +680,157 @@ function renderMessages() {
   });
 }
 
-// רינדור הודעות שנשלחו
+// הצגת הודעות שנשלחו בעיצוב 4.6
 function renderSentMessages(container) {
   container.innerHTML = '';
+
   chrome.storage.local.get(['sentMessages'], (data) => {
     const list = data.sentMessages || [];
+
     if (list.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <span>טרם נשלחו הודעות SMS מהתוסף</span>
-        </div>
-      `;
+      container.innerHTML = '<div class="empty">לא נמצאו הודעות SMS שנשלחו מהתוסף.</div>';
       return;
     }
 
-    list.forEach(item => {
+    list.slice(0, 30).forEach(item => {
       const card = document.createElement('div');
-      card.className = 'msg-card is-sent';
+      card.className = 'msg-card';
+
+      let text = escapeHtml(item.message || '');
+      const displayMsg = text.replace(/\n/g, '<br>');
+
       card.innerHTML = `
-        <div class="card-header">
-          <div class="sender-info">
-            <span class="sender-name">אל: ${escapeHtml(item.phones || '')}</span>
-            <span class="msg-date">${escapeHtml(item.date || '')}</span>
+        <div class="msg-header">
+          <div class="msg-source-wrapper">
+            <span class="msg-source" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;">אל: ${escapeHtml(item.phones)}</span>
           </div>
-          <span style="font-size: 11px; font-weight: 600; color: var(--sent-text);">${escapeHtml(item.status || 'נשלח')}</span>
+          <div class="msg-controls">
+            <button class="ctrl-btn resend-sms-btn" title="שלח שוב לנמען זה">
+              <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+          </div>
+          <div class="msg-date-wrapper"><span class="msg-date">${escapeHtml(item.date || '')}</span></div>
         </div>
-        <div class="card-body">
-          ${escapeHtml(item.message || '')}
-        </div>
+        <div class="msg-body">${displayMsg}</div>
+        <button class="btn-copy">
+          <span class="copy-inner">
+            <svg class="svg-icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            העתק תוכן הודעה
+          </span>
+        </button>
       `;
+
+      card.querySelector('.resend-sms-btn')?.addEventListener('click', () => {
+        openSendSmsModal(item.phones);
+        const txt = document.getElementById('smsMessageText');
+        if (txt) {
+          txt.value = item.message || '';
+          updateCharCounter(txt.value, document.getElementById('smsCharCounter'));
+        }
+      });
+
+      card.querySelector('.btn-copy')?.addEventListener('click', (e) => {
+        navigator.clipboard.writeText(item.message);
+        const copyInner = e.currentTarget.querySelector('.copy-inner');
+        const originalHtml = copyInner.innerHTML;
+        copyInner.innerHTML = 'הועתק בהצלחה!';
+        setTimeout(() => copyInner.innerHTML = originalHtml, 1500);
+      });
+
       container.appendChild(card);
     });
   });
 }
 
-// שינוי מצב נקרא / לא נקרא
-function toggleReadStatus(msgId) {
-  chrome.storage.local.get(['unreadItems', 'unreadCount'], (data) => {
-    let unread = data.unreadItems || [];
-    let count = data.unreadCount || 0;
+// פופאובר Snooze
+function toggleSnoozePopover(card, msgId, isAlreadySnoozed) {
+  // סגירת קיימים
+  document.querySelectorAll('.snooze-popover').forEach(p => p.remove());
 
-    if (unread.includes(msgId)) {
-      unread = unread.filter(id => id !== msgId);
-      count = Math.max(0, count - 1);
-    } else {
-      unread.push(msgId);
-      count += 1;
-    }
+  const popover = document.createElement('div');
+  popover.className = 'snooze-popover';
 
-    chrome.storage.local.set({ unreadItems: unread, unreadCount: count }, () => {
-      renderMessages();
-    });
-  });
-}
+  let html = `
+    <button data-mins="10">בעוד 10 דקות</button>
+    <button data-mins="30">בעוד 30 דקות</button>
+    <button data-mins="60">בעוד שעה</button>
+    <button data-mins="180">בעוד 3 שעות</button>
+    <button data-mins="tomorrow">מחר בבוקר (09:00)</button>
+  `;
 
-// מחיקת הודעה (העברה לסל מחזור)
-function deleteMessage(msgId) {
-  chrome.storage.local.get(['deletedMessages', 'unreadItems', 'unreadCount', 'snoozedItems'], (data) => {
-    let del = data.deletedMessages || [];
-    let unread = data.unreadItems || [];
-    let count = data.unreadCount || 0;
-    let snoozed = data.snoozedItems || {};
-
-    if (!del.includes(msgId)) del.push(msgId);
-    if (unread.includes(msgId)) {
-      unread = unread.filter(id => id !== msgId);
-      count = Math.max(0, count - 1);
-    }
-    delete snoozed[msgId];
-
-    chrome.storage.local.set({
-      deletedMessages: del,
-      unreadItems: unread,
-      unreadCount: count,
-      snoozedItems: snoozed
-    }, () => {
-      deletedMessages = del;
-      renderMessages();
-    });
-  });
-}
-
-// שחזור הודעה מסל מחזור
-function restoreMessage(msgId) {
-  chrome.storage.local.get(['deletedMessages'], (data) => {
-    let del = (data.deletedMessages || []).filter(id => id !== msgId);
-    chrome.storage.local.set({ deletedMessages: del }, () => {
-      deletedMessages = del;
-      renderMessages();
-    });
-  });
-}
-
-// החלת נודניק
-function applySnooze(msgId, msgObj, minsVal) {
-  let wakeTime = Date.now();
-  if (minsVal === 'tomorrow') {
-    const tmrw = new Date();
-    tmrw.setDate(tmrw.getDate() + 1);
-    tmrw.setHours(9, 0, 0, 0);
-    wakeTime = tmrw.getTime();
-  } else {
-    wakeTime += parseInt(minsVal, 10) * 60 * 1000;
+  if (isAlreadySnoozed) {
+    html += `<button data-mins="cancel" class="danger">בטל תזכורת כעת</button>`;
   }
 
-  chrome.storage.local.get(['snoozedItems', 'unreadItems', 'unreadCount'], (data) => {
+  popover.innerHTML = html;
+
+  popover.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const action = btn.getAttribute('data-mins');
+      handleSnoozeSelection(msgId, action);
+      popover.remove();
+    });
+  });
+
+  card.appendChild(popover);
+}
+
+// שמירת בחירת Snooze
+function handleSnoozeSelection(msgId, action) {
+  chrome.storage.local.get(['snoozedItems', 'unreadItems'], (data) => {
     let snoozed = data.snoozedItems || {};
-    let unread = data.unreadItems || [];
-    let count = data.unreadCount || 0;
+    let unreadItems = data.unreadItems || [];
 
-    snoozed[msgId] = {
-      wakeTime: wakeTime,
-      source: msgObj.source,
-      message: msgObj.message
-    };
+    if (action === 'cancel') {
+      delete snoozed[msgId];
+      if (!unreadItems.includes(msgId)) unreadItems.push(msgId);
+    } else {
+      let wakeTime;
+      const now = new Date();
 
-    if (unread.includes(msgId)) {
-      unread = unread.filter(id => id !== msgId);
-      count = Math.max(0, count - 1);
+      if (action === 'tomorrow') {
+        const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 9, 0, 0);
+        wakeTime = tomorrow.getTime();
+      } else {
+        const mins = parseInt(action, 10) || 60;
+        wakeTime = Date.now() + (mins * 60 * 1000);
+      }
+
+      snoozed[msgId] = {
+        wakeTime: wakeTime,
+        created: Date.now()
+      };
+
+      unreadItems = unreadItems.filter(id => id !== msgId);
     }
 
-    chrome.storage.local.set({
-      snoozedItems: snoozed,
-      unreadItems: unread,
-      unreadCount: count
-    }, () => {
-      // רישום אזעקה ב-Chrome Alarm
-      if (chrome.alarms && chrome.alarms.create) {
-        chrome.alarms.create(`snooze_${msgId}`, { when: wakeTime });
-      }
+    chrome.storage.local.set({ snoozedItems: snoozed, unreadItems: unreadItems }, () => {
       renderMessages();
     });
   });
 }
 
-// ביטול נודניק והחזרה מיידית
-function wakeSnoozedMessage(msgId) {
-  chrome.storage.local.get(['snoozedItems', 'unreadItems', 'unreadCount'], (data) => {
-    let snoozed = data.snoozedItems || {};
-    let unread = data.unreadItems || [];
-    let count = data.unreadCount || 0;
-
-    delete snoozed[msgId];
-    if (!unread.includes(msgId)) {
-      unread.push(msgId);
-      count += 1;
+// סימון כנקרא / לא נקרא
+function toggleReadStatus(msgId) {
+  chrome.storage.local.get(['unreadItems'], (data) => {
+    let unreadItems = data.unreadItems || [];
+    if (unreadItems.includes(msgId)) {
+      unreadItems = unreadItems.filter(id => id !== msgId);
+    } else {
+      unreadItems.push(msgId);
     }
-
-    chrome.storage.local.set({
-      snoozedItems: snoozed,
-      unreadItems: unread,
-      unreadCount: count
-    }, () => {
-      if (chrome.alarms && chrome.alarms.clear) {
-        chrome.alarms.clear(`snooze_${msgId}`);
-      }
+    chrome.storage.local.set({ unreadItems: unreadItems }, () => {
       renderMessages();
     });
   });
 }
 
 function escapeHtml(str) {
-  if (!str) return '';
   return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }

@@ -1,6 +1,6 @@
 {
   "name": "PushBox",
-  "description": "פושבוקס v4.6 - קבלת, שליחת וניהול SMS ממערכת ימות המשיח ישירות לדפדפן ולהתראות שולחן העבודה",
+  "description": "פושבוקס - קבלת, שליחת וניהול SMS ממערכת ימות המשיח ישירות לדפדפן ולהתראות שולחן העבודה (גרסה יציבה 4.6 וגרסת בטא 4.91)",
   "requestFramePermissions": ["clipboardWrite"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

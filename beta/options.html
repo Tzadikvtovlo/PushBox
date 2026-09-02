@@ -2,367 +2,291 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>הגדרות PushBox (גרסת בטא 4.9)</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap">
+  <title>הגדרות תוסף - PushBox (בטא 4.91)</title>
   <style>
     :root {
-      --primary: #4f46e5;
-      --primary-hover: #4338ca;
-      --primary-light: #eef2ff;
-      --primary-border: #c7d2fe;
-      --text: #1e293b;
-      --text-muted: #64748b;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --border: #e2e8f0;
-      --border-focus: #818cf8;
-      --success-bg: #ecfdf5;
-      --success-text: #065f46;
-      --success-border: #a7f3d0;
-      --error-bg: #fef2f2;
-      --error-text: #991b1b;
-      --error-border: #fecaca;
+      --primary: #1e3a8a; 
+      --primary-hover: #1e40af;
+      --bg: #faf5ff; 
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --border: #e9d5ff; 
+      --radius: 12px;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Rubik', sans-serif;
-    }
+    * { box-sizing: border-box; }
 
     body {
-      background-color: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Hebrew, sans-serif;
+      background: var(--bg);
       color: var(--text);
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-      padding: 32px 16px;
+      padding: 40px 20px;
+      direction: rtl;
+      margin: 0;
     }
 
     .container {
-      width: 100%;
-      max-width: 520px;
-      background: var(--card-bg);
-      border-radius: 16px;
-      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.08);
+      background: var(--surface);
+      padding: 30px;
+      border-radius: var(--radius);
+      max-width: 460px;
+      margin: 0 auto;
+      box-shadow: 0 10px 25px -5px rgba(107, 33, 168, 0.05), 0 8px 10px -6px rgba(107, 33, 168, 0.02);
       border: 1px solid var(--border);
-      overflow: hidden;
     }
 
     .header {
-      background: #ffffff;
-      padding: 24px 28px 18px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
       align-items: center;
-      justify-content: space-between;
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--bg);
+      padding-bottom: 14px;
     }
 
-    .brand-section {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    .header-logo {
+      text-align: right;
     }
 
-    .logo-img {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-    }
-
-    .title-group h1 {
-      font-size: 19px;
-      font-weight: 700;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .beta-chip {
-      font-size: 11px;
-      font-weight: 700;
-      background: #eff6ff;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
-      border-radius: 6px;
-      padding: 2px 7px;
-      letter-spacing: normal;
-    }
-
-    .title-group p {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .version-tag {
-      font-size: 12px;
-      font-weight: 600;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      padding: 5px 10px;
-      border-radius: 8px;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .version-tag:hover {
-      border-color: var(--primary-border);
+    .header-title {
+      text-align: center;
+      margin: 0;
       color: var(--primary);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
     }
 
-    .version-tag.update {
-      background: #fff7ed;
-      color: #c2410c;
-      border-color: #ffedd5;
+    .version-box {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      background: #f3e8ff;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid #d8b4fe;
+      display: inline-block;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      user-select: none;
     }
 
-    .content {
-      padding: 24px 28px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+    .version-box:hover {
+      background: #e9d5ff;
+      border-color: #c084fc;
+    }
+    
+    .version-box.update {
+      color: #ffffff;
+      background: #6b21a8;
+      border-color: #581c87;
+      animation: pulse-purple 2s infinite;
+    }
+
+    @keyframes pulse-purple {
+      0% { box-shadow: 0 0 0 0 rgba(107, 33, 168, 0.6); }
+      70% { box-shadow: 0 0 0 6px rgba(107, 33, 168, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(107, 33, 168, 0); }
     }
 
     .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
+      margin-bottom: 20px;
     }
 
-    .form-label {
-      font-size: 13px;
+    label {
+      display: block;
+      margin-bottom: 8px;
       font-weight: 600;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .icon-svg {
-      width: 15px;
-      height: 15px;
-      color: var(--text-muted);
-      stroke-width: 2;
-    }
-
-    .input-row {
-      display: flex;
-      gap: 8px;
-    }
-
-    .input-control {
-      flex: 1;
-      height: 40px;
-      padding: 0 12px;
+      color: #334155;
       font-size: 14px;
-      color: var(--text);
-      background-color: #ffffff;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 11px 14px;
+      box-sizing: border-box;
       border: 1px solid var(--border);
       border-radius: 8px;
+      font-size: 14px;
+      background-color: #faf5ff;
+      color: var(--text);
+      transition: all 0.2s ease;
       outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-    .input-control:focus {
-      border-color: var(--border-focus);
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    input:focus, select:focus {
+      border-color: #c084fc;
+      background-color: #fff;
+      box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.15);
     }
 
-    .input-control[readonly] {
-      background-color: var(--bg);
-      color: var(--text-muted);
+    input[readonly] {
+      background-color: #f3e8ff; 
+      border-color: #d8b4fe;
+      color: #581c87;
       cursor: default;
+      text-align: center;
+      font-weight: 800;
+      letter-spacing: 1px;
     }
 
-    .btn {
-      height: 40px;
-      padding: 0 16px;
-      font-size: 13px;
-      font-weight: 600;
+    input[readonly]:focus {
+      box-shadow: none;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    button {
+      flex: 1 1 45%;
+      border: none;
+      padding: 11px 12px;
       border-radius: 8px;
       cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s ease;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      border: 1px solid transparent;
-      transition: all 0.2s;
       white-space: nowrap;
     }
 
-    .btn-primary {
-      background-color: var(--primary);
-      color: #ffffff;
+    .btn-secondary {
+      background: #f3e8ff;
+      color: var(--primary);
+      border: 1px solid var(--border);
     }
 
-    .btn-primary:hover {
-      background-color: var(--primary-hover);
+    .btn-secondary:hover {
+      background: #e9d5ff;
+      color: #1e3a8a;
+      border-color: #c084fc;
     }
 
-    .btn-outline {
-      background-color: #ffffff;
-      border-color: var(--border);
-      color: var(--text);
-    }
-
-    .btn-outline:hover {
-      background-color: var(--bg);
-      border-color: #cbd5e1;
-    }
-
-    .help-text {
-      font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
-
-    .actions-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 4px;
+    .svg-icon {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
     }
 
     .footer {
-      background-color: var(--bg);
-      padding: 16px 28px;
+      margin-top: 30px;
+      padding-top: 20px;
       border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      text-align: center;
       font-size: 12px;
       color: var(--text-muted);
+      line-height: 1.8;
     }
 
-    .footer-link {
+    .footer a {
       color: var(--primary);
       text-decoration: none;
-      font-weight: 500;
-      cursor: pointer;
+      font-weight: bold;
     }
 
-    .footer-link:hover {
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    .email-copy {
+      color: var(--primary);
+      font-weight: bold;
+      cursor: pointer;
+      direction: ltr;
+      display: inline-block;
+    }
+
+    .email-copy:hover {
       text-decoration: underline;
     }
   </style>
 </head>
 <body>
-
   <div class="container">
+    
     <div class="header">
-      <div class="brand-section">
-        <img src="icon48.png" alt="PushBox Logo" class="logo-img">
-        <div class="title-group">
-          <h1>
-            PushBox
-            <span class="beta-chip">4.9 בטא</span>
-          </h1>
-          <p>הגדרות תוסף SMS ימות המשיח</p>
-        </div>
+      <div class="header-logo">
+        <img src="icon48.png" alt="לוגו" style="width: 26px; height: 26px; object-fit: contain; vertical-align: middle;">
       </div>
-      <div id="versionBox" class="version-tag" title="לחץ לבדיקת עדכונים">v4.9</div>
+      <h2 class="header-title">PushBox</h2>
+      <div style="text-align: left;">
+        <span id="versionBox" class="version-box" title="לחץ לבדיקת עדכונים">טוען...</span>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label for="token">טוקן התחברות (Token):</label>
+      <input type="text" id="token" placeholder="הכנס טוקן מערכת כאן">
     </div>
 
-    <div class="content">
-      <!-- טוקן מערכת -->
-      <div class="form-group">
-        <label class="form-label" for="token">
-          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-          טוקן API (Token) של ימות המשיח:
-        </label>
-        <div class="input-row">
-          <input type="text" id="token" class="input-control" placeholder="הזן טוקן כאן..." autocomplete="off">
-          <button id="verifyToken" class="btn btn-outline">
-            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            אימות
-          </button>
-        </div>
-        <div class="help-text">טוקן המאפשר גישה לשליפת הודעות נכנסות ושליחת SMS במערכת.</div>
-      </div>
+    <div class="form-group">
+      <label for="phoneNumber">מספר הטלפון של המערכת:</label>
+      <input type="text" id="phoneNumber" placeholder="ישלף אוטומטית מהמערכת..." readonly title="מספר זה מעודכן אוטומטית בהתאם לטוקן">
+    </div>
+    
+    <div class="form-group">
+      <label for="interval">תדירות בדיקה אוטומטית ברקע:</label>
+      <select id="interval">
+        <option value="0">ללא בדיקה אוטומטית (ידני בלבד)</option>
+        <option value="1">כל דקה</option>
+        <option value="5">כל 5 דקות</option>
+        <option value="15">כל 15 דקות</option>
+        <option value="30">כל 30 דקות</option>
+      </select>
+    </div>
 
-      <!-- מספר המערכת שזוהה -->
-      <div class="form-group">
-        <label class="form-label" for="phoneNumber">
-          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-          מספר מערכת שזוהה:
-        </label>
-        <input type="text" id="phoneNumber" class="input-control" readonly placeholder="יתעדכן אוטומטית לאחר אימות...">
-      </div>
+    <div class="form-group">
+      <label for="notificationStyle">התראות עבור הודעות חדשות:</label>
+      <select id="notificationStyle">
+        <option value="both">חלון קופץ (Push) וסמל התוסף</option>
+        <option value="push">חלון קופץ (Push)</option>
+        <option value="badge">עדכון בסמל התוסף</option>
+      </select>
+    </div>
 
-      <!-- תדירות בדיקה -->
-      <div class="form-group">
-        <label class="form-label" for="interval">
-          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-          תדירות בדיקת SMS ברקע:
-        </label>
-        <select id="interval" class="input-control">
-          <option value="0.5">כל 30 שניות</option>
-          <option value="1">כל דקה (מומלץ)</option>
-          <option value="2">כל 2 דקות</option>
-          <option value="5">כל 5 דקות</option>
-          <option value="10">כל 10 דקות</option>
-        </select>
-      </div>
-
-      <!-- סגנון התראות -->
-      <div class="form-group">
-        <label class="form-label" for="notificationStyle">
-          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-          סגנון הצגת התראות:
-        </label>
-        <select id="notificationStyle" class="input-control">
-          <option value="both">שניהם (התראת פוש ומספר על האייקון)</option>
-          <option value="push">רק התראת שולחן עבודה (באנר)</option>
-          <option value="badge">רק מספר על האייקון של התוסף</option>
-          <option value="none">ללא התראות כלל</option>
-        </select>
-      </div>
-
-      <!-- בחירת ערוץ עדכונים (הדרישה החדשה) -->
-      <div class="form-group">
-        <label class="form-label" for="updateChannel">
-          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          התראות על עדכוני גרסה:
-        </label>
-        <select id="updateChannel" class="input-control">
-          <option value="stable">התראה על עדכון רגיל (גרסאות יציבות בלבד)</option>
-          <option value="beta">התראה גם על עדכוני בטא (Beta / Pre-release)</option>
-          <option value="none">בלי התראה בכלל על עדכונים</option>
-        </select>
-        <div class="help-text">בחר האם לקבל התראה רק על גרסאות יציבות רשמיות, לכלול גם גרסאות בטא חדשות, או לכבות עדכונים.</div>
-      </div>
-
-      <!-- כפתורי ניהול נוספים -->
-      <div class="actions-grid">
-        <button id="manageFilters" class="btn btn-outline">
-          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-          ניהול פילטרים
-        </button>
-        <button id="resendNow" class="btn btn-outline">
-          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-          התראה חוזרת
-        </button>
-      </div>
-
-      <!-- שמירת הגדרות -->
-      <button id="save" class="btn btn-primary" style="height: 44px; margin-top: 4px;">
-        <svg class="icon-svg" style="color: #ffffff;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-        שמור הגדרות
+    <div class="form-group">
+      <label for="updateChannel">ערוץ קבלת עדכונים:</label>
+      <select id="updateChannel">
+        <option value="beta">ערוץ בטא (מומלץ - בדיקת עדכוני בטא וגרסאות מוקדמות)</option>
+        <option value="stable">גרסה יציבה בלבד (Official Release)</option>
+        <option value="none">אל תבדוק עדכונים כלל</option>
+      </select>
+    </div>
+    
+    <div class="btn-group">
+      <button id="verifyToken" class="btn-secondary">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> אמת טוקן
+      </button>
+      <button id="save" class="btn-secondary">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> שמור
+      </button>
+      <button id="manageFilters" class="btn-secondary">
+        <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg> מסננים
+      </button>
+      <button id="resendNow" class="btn-secondary">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg> שלח
       </button>
     </div>
 
     <div class="footer">
-      <span>PushBox v4.9 Beta &bull; ימות המשיח</span>
-      <span id="copyEmail" class="footer-link" title="לחץ להעתקת כתובת">q9411aa@gmail.com</span>
+      <div>כל הזכויות שמורות</div>
+      <div><a href="https://github.com/Tzadikvtovlo" target="_blank">צדיק וטוב לו</a></div>
+      <div><span class="email-copy" id="copyEmail" title="לחץ להעתקת המייל ללוח">q9411aa@gmail.com</span></div>
     </div>
   </div>
-
   <script src="options.js"></script>
 </body>
 </html>
