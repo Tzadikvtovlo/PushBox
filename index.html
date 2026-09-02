@@ -3,857 +3,525 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PushBox - ניהול וקבלת SMS מימות המשיח</title>
+  <title>PushBox - תצוגה מקדימה וסביבת בדיקות (גרסת בטא 4.9 וגרסת מאגר 4.6)</title>
   <script src="chrome-polyfill.js"></script>
   <link rel="icon" type="image/png" href="icon48.png">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap">
   <style>
     :root {
-      --primary: #1e3a8a;
-      --primary-hover: #1e40af;
-      --purple: #6b21a8;
-      --purple-hover: #581c87;
-      --bg: #faf5ff;
-      --surface: #ffffff;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #eef2ff;
+      --primary-border: #c7d2fe;
       --text: #0f172a;
-      --text-muted: #475569;
-      --border: #e9d5ff;
+      --text-muted: #64748b;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
       --radius: 12px;
     }
 
-    * { box-sizing: border-box; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Hebrew, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
+      font-family: 'Rubik', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
-      direction: rtl;
       display: flex;
       flex-direction: column;
     }
 
-    /* Top Application Bar */
-    .app-nav {
+    /* סרגל עליון */
+    .top-nav {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       padding: 12px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 1px 3px rgba(107, 33, 168, 0.05);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
       position: sticky;
       top: 0;
       z-index: 50;
+      flex-wrap: wrap;
+      gap: 12px;
     }
 
-    .brand {
+    .brand-section {
       display: flex;
       align-items: center;
       gap: 12px;
     }
 
     .brand-logo {
-      width: 34px;
-      height: 34px;
-      object-fit: contain;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
     }
 
     .brand-info h1 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--primary);
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .brand-info p {
-      margin: 2px 0 0 0;
       font-size: 12px;
       color: var(--text-muted);
     }
 
-    /* Toolbar Extension Simulation */
-    .toolbar-simulator {
+    .channel-switch-group {
       display: flex;
-      align-items: center;
-      gap: 16px;
-      background: #f3e8ff;
-      padding: 6px 14px;
-      border-radius: 24px;
+      background: var(--bg);
+      padding: 3px;
+      border-radius: 8px;
       border: 1px solid var(--border);
+      gap: 4px;
     }
 
-    .sim-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--purple);
-    }
-
-    .extension-icon-btn {
-      position: relative;
-      cursor: pointer;
-      background: transparent;
+    .channel-btn {
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
       border: none;
-      padding: 4px;
+      background: transparent;
       border-radius: 6px;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
+      gap: 6px;
+      transition: all 0.15s;
     }
 
-    .extension-icon-btn:hover {
-      background: rgba(107, 33, 168, 0.12);
+    .channel-btn.active {
+      background: var(--surface);
+      color: var(--primary);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
 
-    .extension-icon-btn img {
-      width: 26px;
-      height: 26px;
-      display: block;
-    }
-
-    .extension-badge {
-      position: absolute;
-      top: -2px;
-      right: -4px;
-      background: #6b21a8;
-      color: #ffffff;
+    .channel-badge {
       font-size: 10px;
-      font-weight: 800;
-      padding: 1px 5px;
-      border-radius: 10px;
-      border: 1.5px solid #ffffff;
-      min-width: 16px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+
+    .channel-badge.beta {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+    }
+
+    .channel-badge.stable {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+    }
+
+    /* תוכן ראשי */
+    .main-layout {
+      flex: 1;
+      display: flex;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px;
+      gap: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .main-layout {
+        flex-direction: column;
+      }
+    }
+
+    /* צד ימין: חלון התוסף */
+    .extension-stage {
+      flex: 0 0 460px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .stage-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stage-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fafafa;
+    }
+
+    .stage-tabs {
+      display: flex;
+      gap: 4px;
+    }
+
+    .stage-tab {
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .stage-tab.active {
+      background: var(--surface);
+      color: var(--text);
+      font-weight: 600;
+      border-color: var(--border);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+
+    .preview-frame {
+      width: 100%;
+      height: 580px;
+      border: none;
+      background: #ffffff;
+    }
+
+    /* צד שמאל: סרגל כלי בדיקה וסימולציה */
+    .control-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .panel-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel-box h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-svg {
+      width: 16px;
       height: 16px;
-      display: none;
+      stroke-width: 2;
+      stroke: currentColor;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+      color: #334155;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .feature-icon {
+      color: var(--primary);
+      margin-top: 2px;
+    }
+
+    .btn {
+      height: 38px;
+      padding: 0 14px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      line-height: 1;
-      pointer-events: none;
+      gap: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      transition: all 0.15s;
     }
 
-    /* Tab Navigation */
-    .tabs-bar {
+    .btn:hover {
+      background: var(--bg);
+      border-color: #cbd5e1;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .input-row {
       display: flex;
       gap: 8px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 8px 24px;
-      overflow-x: auto;
     }
 
-    .tab-btn {
-      background: none;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-muted);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s ease;
-      white-space: nowrap;
-    }
-
-    .tab-btn:hover {
-      background: #f3e8ff;
-      color: var(--primary);
-    }
-
-    .tab-btn.active {
-      background: #f3e8ff;
-      color: var(--primary);
-      border-bottom: 2px solid var(--primary);
-    }
-
-    /* Main Content Container */
-    .main-container {
+    .input-control {
       flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 24px;
-    }
-
-    .view-container {
-      display: none;
-      width: 100%;
-      max-width: 900px;
-    }
-
-    .view-container.active {
-      display: flex;
-      justify-content: center;
-    }
-
-    /* Popup Frame Preview */
-    .popup-frame-wrapper {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .popup-frame-card {
-      width: 384px;
-      height: 564px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: 0 12px 32px rgba(107, 33, 168, 0.12);
-      overflow: hidden;
-      background: #faf5ff;
-    }
-
-    .popup-iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      display: block;
-    }
-
-    /* Options & Filters Views */
-    .page-iframe-wrapper {
-      width: 100%;
-      max-width: 520px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: 0 8px 24px rgba(107, 33, 168, 0.08);
-      overflow: hidden;
-      min-height: 560px;
-    }
-
-    .page-iframe {
-      width: 100%;
-      min-height: 600px;
-      border: none;
-      display: block;
-    }
-
-    /* Live Simulator Card */
-    .sim-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-      box-shadow: 0 8px 24px rgba(107, 33, 168, 0.08);
-      width: 100%;
-      max-width: 600px;
-    }
-
-    .sim-card h2 {
-      margin: 0 0 8px 0;
-      color: var(--primary);
-      font-size: 20px;
-      font-weight: 800;
-    }
-
-    .sim-card p {
-      margin: 0 0 20px 0;
-      color: var(--text-muted);
+      height: 38px;
+      padding: 0 12px;
       font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .form-group {
-      margin-bottom: 16px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 700;
-      font-size: 13px;
-      color: var(--text);
-    }
-
-    .form-group input, .form-group textarea {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 8px;
       border: 1px solid var(--border);
-      font-size: 13px;
+      border-radius: 6px;
       outline: none;
-      background: #faf5ff;
-      transition: all 0.2s ease;
-      box-sizing: border-box;
     }
 
-    .form-group input:focus, .form-group textarea:focus {
-      border-color: #c084fc;
-      background: #ffffff;
-      box-shadow: 0 0 0 2px rgba(192, 132, 252, 0.2);
+    .input-control:focus {
+      border-color: var(--primary);
     }
 
-    .preset-btns {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 16px;
-    }
-
-    .preset-btn {
-      background: #f3e8ff;
-      border: 1px solid #d8b4fe;
-      border-radius: 6px;
-      padding: 6px 10px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--primary);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .preset-btn:hover {
-      background: #e9d5ff;
-    }
-
-    .btn-send {
-      background: var(--purple);
-      color: #ffffff;
-      border: none;
-      padding: 12px 20px;
+    .info-callout {
+      padding: 12px 14px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
       border-radius: 8px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      width: 100%;
-      transition: all 0.2s ease;
-    }
-
-    .btn-send:hover {
-      background: var(--purple-hover);
-    }
-
-    /* Guide Card */
-    .guide-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-      box-shadow: 0 8px 24px rgba(107, 33, 168, 0.08);
-      width: 100%;
-      max-width: 650px;
-      line-height: 1.6;
-    }
-
-    .guide-card h2 {
-      color: var(--primary);
-      font-size: 22px;
-      margin-top: 0;
-    }
-
-    .guide-card h3 {
-      color: var(--purple);
-      font-size: 16px;
-      margin-top: 20px;
-    }
-
-    .guide-card ol, .guide-card ul {
-      padding-right: 20px;
-      font-size: 14px;
-      color: var(--text);
-    }
-
-    .guide-card li {
-      margin-bottom: 8px;
-    }
-
-    .badge-tag {
-      background: #f3e8ff;
-      color: var(--purple);
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-weight: 700;
       font-size: 12px;
-    }
-
-    /* Floating Notification Banner (Desktop Toast Emulator) */
-    .notification-toast-container {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-width: 340px;
-      pointer-events: none;
-    }
-
-    .notification-toast {
-      pointer-events: auto;
-      background: #ffffff;
-      border: 1px solid var(--border);
-      border-right: 6px solid var(--purple);
-      border-radius: 10px;
-      padding: 12px 16px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-      cursor: pointer;
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      animation: slideIn 0.3s ease;
-      transition: transform 0.2s ease;
-    }
-
-    .notification-toast:hover {
-      transform: translateY(-2px);
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateX(-30px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-
-    .toast-icon {
-      width: 32px;
-      height: 32px;
-      object-fit: contain;
-      flex-shrink: 0;
-    }
-
-    .toast-content {
-      flex: 1;
-    }
-
-    .toast-title {
-      font-size: 13px;
-      font-weight: 800;
-      color: var(--primary);
-      margin-bottom: 4px;
-    }
-
-    .toast-body {
-      font-size: 12px;
-      color: var(--text);
-      white-space: pre-line;
-      line-height: 1.4;
-    }
-
-    .toast-hint {
-      font-size: 10px;
-      color: var(--purple);
-      font-weight: 700;
-      margin-top: 6px;
-    }
-
-    /* Footer */
-    .app-footer {
-      text-align: center;
-      padding: 16px;
-      font-size: 12px;
-      color: var(--text-muted);
-      border-top: 1px solid var(--border);
-      background: var(--surface);
+      line-height: 1.5;
+      color: #1e40af;
     }
   </style>
 </head>
 <body>
 
-  <!-- Top App Navigation -->
-  <header class="app-nav">
-    <div class="brand">
-      <img src="icon48.png" alt="PushBox Logo" class="brand-logo">
+  <!-- סרגל עליון -->
+  <header class="top-nav">
+    <div class="brand-section">
+      <img src="icon48.png" alt="PushBox" class="brand-logo">
       <div class="brand-info">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <h1 style="margin: 0;">PushBox</h1>
-          <span class="badge-tag" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-size:12px;">גרסת בטא 4.6</span>
-        </div>
-        <p>קבלת וניהול SMS ממערכת ימות המשיח ישירות לדפדפן</p>
+        <h1>
+          PushBox
+          <span id="activeChannelBadge" class="channel-badge beta">4.9 בטא</span>
+        </h1>
+        <p>קבלת, שליחה וניהול SMS מימות המשיח ישירות לדפדפן</p>
       </div>
     </div>
 
-    <!-- Browser Extension Toolbar Simulation -->
-    <div class="toolbar-simulator">
-      <span class="sim-label">סרגל הדפדפן (Extension Icon):</span>
-      <button id="toolbarExtBtn" class="extension-icon-btn" title="PushBox">
-        <img src="icon48.png" alt="Extension Icon">
-        <span id="toolbarBadge" class="extension-badge"></span>
+    <!-- מתג בחירה בין גרסת בטא 4.9 לגרסת מאגר 4.6 -->
+    <div class="channel-switch-group">
+      <button id="btnChannelBeta" class="channel-btn active" title="הצג את גרסת 4.9 בטא מתיקיית beta">
+        <svg class="icon-svg" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        PushBox 4.9 בטא
+        <span class="channel-badge beta">בטא</span>
+      </button>
+      <button id="btnChannelStable" class="channel-btn" title="הצג את גרסת 4.6 המקורית מקבצי הבסיס">
+        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        PushBox 4.6 (יציב)
+        <span class="channel-badge stable">מאגר</span>
       </button>
     </div>
   </header>
 
-  <!-- Navigation Tabs -->
-  <nav class="tabs-bar">
-    <button class="tab-btn active" data-tab="popup">
-      💬 חלון התוסף (Popup)
-    </button>
-    <button class="tab-btn" data-tab="options">
-      ⚙️ הגדרות (Options)
-    </button>
-    <button class="tab-btn" data-tab="filters">
-      🔍 מסננים (Filters)
-    </button>
-    <button class="tab-btn" data-tab="simulator">
-      🧪 סימולטור SMS לבדיקה
-    </button>
-    <button class="tab-btn" data-tab="guide">
-      📖 מדריך והתקנה
-    </button>
-  </nav>
+  <!-- פריסה מרכזית -->
+  <div class="main-layout">
 
-  <!-- Main Views -->
-  <main class="main-container">
+    <!-- צד תצוגה מקדימה של התוסף -->
+    <section class="extension-stage">
+      <div class="stage-card">
+        <div class="stage-header">
+          <div class="stage-tabs">
+            <button class="stage-tab active" data-view="popup">חלון התוסף (Popup)</button>
+            <button class="stage-tab" data-view="options">דף הגדרות (Options)</button>
+            <button class="stage-tab" data-view="filters">מסננים (Filters)</button>
+          </div>
+          <button id="reloadFrameBtn" class="btn" style="height: 28px; padding: 0 8px; font-size: 11px;" title="רענן מסגרת">
+            <svg class="icon-svg" style="width: 12px; height: 12px;" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            רענן
+          </button>
+        </div>
+        <iframe id="appFrame" class="preview-frame" src="beta/popup.html"></iframe>
+      </div>
+    </section>
 
-    <!-- View 1: Extension Popup -->
-    <div id="view-popup" class="view-container active">
-      <div class="popup-frame-wrapper">
-        <div class="popup-frame-card">
-          <iframe id="popupIframe" class="popup-iframe" src="popup.html" title="PushBox Popup"></iframe>
+    <!-- צד כלי בדיקה וסימולציה -->
+    <section class="control-panel">
+
+      <!-- כרטיס הסבר על הפרדת הגרסאות -->
+      <div class="panel-box">
+        <h3>
+          <svg class="icon-svg" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          הפרדת גרסאות מאגר וגרסת בטא 4.9
+        </h3>
+        <div class="feature-list">
+          <div class="feature-item">
+            <svg class="icon-svg feature-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span><strong>קבצי המאגר המקוריים (גרסה 4.6) נשמרו ללא שינוי:</strong> קבצי השורש (Root) נותרו גרסה 4.6 היציבה ללא דריסה וללא תלות בפוליפילים.</span>
+          </div>
+          <div class="feature-item">
+            <svg class="icon-svg feature-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span><strong>גרסת בטא 4.9 שוכנת בתיקייה ייעודית <code>beta/</code>:</strong> כוללת שליחת SMS, לקריאה בהמשך (Snooze), בחירת ערוצי עדכון, ואייקונים אלגנטיים.</span>
+          </div>
+          <div class="feature-item">
+            <svg class="icon-svg feature-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span><strong>אימות טוקן ישיר:</strong> תוקנה שגיאת השליפה מול שרתי ימות המשיח (הפוליפיל מנוטרל לחלוטין בתוך תוסף כרום אמיתי, ושליפת ה-Session וה-SMS מתבצעת ישירות).</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- View 2: Options Page -->
-    <div id="view-options" class="view-container">
-      <div class="page-iframe-wrapper">
-        <iframe id="optionsIframe" class="page-iframe" src="options.html" title="PushBox Options"></iframe>
-      </div>
-    </div>
-
-    <!-- View 3: Filters Page -->
-    <div id="view-filters" class="view-container">
-      <div class="page-iframe-wrapper">
-        <iframe id="filtersIframe" class="page-iframe" src="filters.html" title="PushBox Filters"></iframe>
-      </div>
-    </div>
-
-    <!-- View 4: Live SMS Simulator -->
-    <div id="view-simulator" class="view-container">
-      <div class="sim-card">
-        <h2>🧪 סימולטור SMS בזמן אמת</h2>
-        <p>הדמה קבלת SMS חדש ממערכת ימות המשיח. צפה בהופעת ההתראה, עדכון מונה ההודעות שלא נקראו בסרגל, זיהוי קוד אימות אוטומטי, וכפתור העתקת הקוד.</p>
-
-        <div class="preset-btns">
-          <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); align-self: center;">תבניות מהירות:</span>
-          <button class="preset-btn" data-sender="Google" data-msg="קוד האימות שלך ב-Google הוא 629148. הקוד בתוקף ל-10 דקות.">Google (629148)</button>
-          <button class="preset-btn" data-sender="Bit" data-msg="שלום, קוד אימות: 839201 עבור אישור פעולה באפליקציית Bit.">Bit (839201)</button>
-          <button class="preset-btn" data-sender="Bank-Hapoalim" data-msg="קוד כניסה חד פעמי לחשבונך בבנק הפועלים: 519284.">בנק הפועלים (519284)</button>
-          <button class="preset-btn" data-sender="0521234567" data-msg="שלום וברכה, ההזמנה שלך התקבלה בהצלחה. תודה!">מספר פרטי</button>
+      <!-- סימולטור הזרקת SMS בזמן אמת -->
+      <div class="panel-box">
+        <h3>
+          <svg class="icon-svg" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          סימולטור בדיקות SMS
+        </h3>
+        <div class="info-callout">
+          ניתן להזריק הודעת SMS לבדיקת התראות שולחן עבודה, מונה לא-נקראים, וסינון.
         </div>
-
-        <form id="simForm">
-          <div class="form-group">
-            <label for="simSender">שם השולח או מספר טלפון:</label>
-            <input type="text" id="simSender" value="Google" required>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div class="input-row">
+            <input type="text" id="simSource" class="input-control" placeholder="שם שולח (למשל Google, Bank)" value="Google">
+            <input type="text" id="simCode" class="input-control" placeholder="קוד אימות" value="849201">
           </div>
-
-          <div class="form-group">
-            <label for="simMessage">תוכן ההודעה (כולל קוד אימות):</label>
-            <textarea id="simMessage" rows="3" required>קוד האימות שלך ב-Google הוא 629148. אין למסור קוד זה לאיש.</textarea>
-          </div>
-
-          <button type="submit" class="btn-send">🚀 שלח SMS מדומה למערכת</button>
-        </form>
-
-        <div style="margin-top: 24px; padding-top: 18px; border-top: 1px dashed var(--border);">
-          <div style="font-size: 13px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">✨ בדיקת תכונות גרסה 4.6:</div>
+          <input type="text" id="simMessage" class="input-control" placeholder="תוכן ההודעה..." value="קוד האימות שלך ב-Google הוא 849201. בתוקף ל-10 דקות.">
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button type="button" id="btnTestSendSmsModal" class="preset-btn" style="background:#dbeafe; border-color:#93c5fd; color:#1e40af; font-weight:700;">
-              📤 פתח מסך שליחת SMS בתוסף
-            </button>
-            <button type="button" id="btnTestQuickSnooze" class="preset-btn" style="background:#f1f5f9; border-color:#cbd5e1; color:#334155; font-weight:700;">
-              ⏰ בדוק 'לקריאה בהמשך' (8 שניות - צבע אפרפר חלבי והתראה)
-            </button>
+            <button id="btnInjectSms" class="btn btn-primary">הזרק SMS חדש</button>
+            <button id="btnPresetBank" class="btn">בנק לאומי</button>
+            <button id="btnPresetBit" class="btn">העברת Bit</button>
+            <button id="btnPresetPost" class="btn">דואר ישראל</button>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- View 5: Guide -->
-    <div id="view-guide" class="view-container">
-      <div class="guide-card">
-        <h2>📖 מדריך שימוש והתקנה - PushBox</h2>
-        
-        <h3>מטרת התוסף</h3>
-        <p>תוסף PushBox מאפשר לקבל ולנהל הודעות SMS המתקבלות במספר הווירטואלי של מערכת ימות המשיח (Call2All) ישירות לדפדפן, כולל התראות קופצות, זיהוי קודי אימות אוטומטיים והעתקתם בלחיצה אחת, סינון שולחים, וניהול סל מחזור והשהיית הודעות (Snooze).</p>
-
-        <h3>איך לקבל טוקן ממערכת ימות המשיח:</h3>
-        <ol>
-          <li>נכנסים לאתר ימות המשיח בכתובת <a href="https://www.call2all.co.il/ym/index.php?view=events" target="_blank">call2all.co.il</a></li>
-          <li>מבצעים 'אימות קשיח' באמצעות קוד חד פעמי למייל או לטלפון.</li>
-          <li>לאחר האימות לוחצים על <strong>מפתחות גישה</strong>.</li>
-          <li>לוחצים על <strong>'יצירת מפתח חדש'</strong>, בוחרים שם (למשל: PushBox), לוחצים על שמירה ומעתיקים את הטוקן.</li>
-          <li>מדביקים את הטוקן בלשונית <strong>הגדרות</strong> ולוחצים על 'אמת טוקן' ולאחר מכן 'שמור הגדרות'.</li>
-        </ol>
-
-        <h3>התקנה בדפדפן Chrome:</h3>
-        <ol>
-          <li>פתח את דף התוספים בדפדפן: <code>chrome://extensions</code></li>
-          <li>הפעל את <strong>מצב מפתח (Developer mode)</strong> בפינה העליונה.</li>
-          <li>לחץ על <strong>'טען תוסף לא ארוז' (Load unpacked)</strong> ובחר את תיקיית הפרויקט.</li>
-          <li>זהו! סמל PushBox יופיע בסרגל התוספים של הדפדפן.</li>
-        </ol>
+      <!-- בדיקת ערוץ עדכונים -->
+      <div class="panel-box">
+        <h3>
+          <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          הגדרת ערוץ עדכון בבטא
+        </h3>
+        <p style="font-size: 13px; color: var(--text-muted);">
+          בדף ההגדרות של גרסה 4.9 נוספה תיבת בחירה של:
+        </p>
+        <ul style="font-size: 13px; color: #334155; padding-right: 20px; line-height: 1.6;">
+          <li><strong>התראה על עדכון רגיל:</strong> בודק ב-GitHub רק שחרורים יציבים רשמיים.</li>
+          <li><strong>התראה גם על עדכוני בטא:</strong> בודק את כל השחרורים כולל Pre-releases.</li>
+          <li><strong>בלי התראה בכלל על עדכונים:</strong> מכבה לחלוטין התראות ותגי עדכון.</li>
+        </ul>
       </div>
-    </div>
 
-  </main>
+    </section>
 
-  <!-- Notification Toast Container -->
-  <div id="notificationContainer" class="notification-toast-container"></div>
+  </div>
 
-  <!-- Background worker loaded in background context -->
-  <script src="background.js"></script>
-
-  <!-- App Controller Script -->
   <script>
-    // Tab switching
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const viewContainers = document.querySelectorAll('.view-container');
-    const toolbarExtBtn = document.getElementById('toolbarExtBtn');
-    const toolbarBadge = document.getElementById('toolbarBadge');
-    const notificationContainer = document.getElementById('notificationContainer');
+    let currentChannel = 'beta'; // 'beta' or 'stable'
+    let currentView = 'popup';   // 'popup', 'options', 'filters'
 
-    function switchTab(tabId) {
-      tabBtns.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tabId);
-      });
-      viewContainers.forEach(view => {
-        view.classList.toggle('active', view.id === `view-${tabId}`);
-      });
-      // Refresh iframe if switching to popup
-      if (tabId === 'popup') {
-        const popupIframe = document.getElementById('popupIframe');
-        if (popupIframe && popupIframe.contentWindow) {
-          try {
-            popupIframe.contentWindow.location.reload();
-          } catch(e) {}
-        }
-      }
+    const appFrame = document.getElementById('appFrame');
+    const btnBeta = document.getElementById('btnChannelBeta');
+    const btnStable = document.getElementById('btnChannelStable');
+    const channelBadge = document.getElementById('activeChannelBadge');
+    const stageTabs = document.querySelectorAll('.stage-tab');
+
+    function updateFrameSrc() {
+      const prefix = currentChannel === 'beta' ? 'beta/' : '';
+      let targetFile = `${prefix}${currentView}.html`;
+      appFrame.src = targetFile;
     }
 
-    tabBtns.forEach(btn => {
-      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    btnBeta.addEventListener('click', () => {
+      currentChannel = 'beta';
+      btnBeta.classList.add('active');
+      btnStable.classList.remove('active');
+      channelBadge.textContent = '4.9 בטא';
+      channelBadge.className = 'channel-badge beta';
+      updateFrameSrc();
     });
 
-    toolbarExtBtn.addEventListener('click', () => {
-      switchTab('popup');
+    btnStable.addEventListener('click', () => {
+      currentChannel = 'stable';
+      btnStable.classList.add('active');
+      btnBeta.classList.remove('active');
+      channelBadge.textContent = '4.6 יציב';
+      channelBadge.className = 'channel-badge stable';
+      updateFrameSrc();
     });
 
-    // Update toolbar badge
-    function updateBadgeDisplay() {
-      chrome.storage.local.get(['unreadCount', 'updateAvailable', 'connectionError', 'notificationStyle'], (data) => {
-        const unreadCount = data.unreadCount || 0;
-        const updateAvailable = data.updateAvailable || false;
-        const connectionError = data.connectionError || "";
-
-        let text = "";
-        let bgColor = "#6b21a8";
-        let title = "PushBox";
-
-        if (unreadCount > 0) {
-          text = String(unreadCount);
-          title = `${unreadCount} הודעות חדשות`;
-        } else if (connectionError) {
-          text = "X";
-          title = connectionError;
-        } else if (updateAvailable) {
-          text = "!";
-          title = "יש עדכון חדש";
-        }
-
-        if (text) {
-          toolbarBadge.style.display = 'flex';
-          toolbarBadge.textContent = text;
-          toolbarBadge.style.backgroundColor = bgColor;
-        } else {
-          toolbarBadge.style.display = 'none';
-        }
-        toolbarExtBtn.title = title;
-      });
-    }
-
-    window.addEventListener('pushbox-badge-text', (e) => {
-      const text = e.detail.text;
-      if (text) {
-        toolbarBadge.style.display = 'flex';
-        toolbarBadge.textContent = text;
-      } else {
-        toolbarBadge.style.display = 'none';
-      }
-    });
-
-    window.addEventListener('pushbox-badge-color', (e) => {
-      if (e.detail.color) toolbarBadge.style.backgroundColor = e.detail.color;
-    });
-
-    window.addEventListener('pushbox-badge-title', (e) => {
-      if (e.detail.title) toolbarExtBtn.title = e.detail.title;
-    });
-
-    // Custom tabs open listener
-    window.addEventListener('pushbox-open-tab', (e) => {
-      const url = e.detail.url || '';
-      if (url.includes('options.html')) {
-        switchTab('options');
-      } else if (url.includes('filters.html')) {
-        switchTab('filters');
-        const filtersIframe = document.getElementById('filtersIframe');
-        if (filtersIframe) filtersIframe.src = url;
-      }
-    });
-
-    // Toast notification display
-    window.showPushBoxToast = function (notifId, options) {
-      const toast = document.createElement('div');
-      toast.className = 'notification-toast';
-
-      toast.innerHTML = `
-        <img src="${options.iconUrl || 'icon48.png'}" class="toast-icon" alt="Notification">
-        <div class="toast-content">
-          <div class="toast-title">${options.title || 'PushBox'}</div>
-          <div class="toast-body">${options.message || ''}</div>
-          <div class="toast-hint">לחץ להעתקת קוד האימות 📋</div>
-        </div>
-      `;
-
-      toast.addEventListener('click', () => {
-        // Trigger chrome notification click listener (in background.js)
-        if (chrome && chrome.notifications && chrome.notifications.onClicked) {
-          window.dispatchEvent(new CustomEvent('pushbox-notification-clicked', { detail: { id: notifId } }));
-          const channel = new BroadcastChannel('pushbox_extension_bus');
-          channel.postMessage({ type: 'NOTIFICATION_CLICKED', notificationId: notifId });
-        }
-        toast.remove();
-      });
-
-      notificationContainer.appendChild(toast);
-
-      // Auto dismiss after 10s
-      setTimeout(() => {
-        if (toast.parentElement) toast.remove();
-      }, 10000);
-    };
-
-    // Live Simulator Form
-    const simForm = document.getElementById('simForm');
-    const simSender = document.getElementById('simSender');
-    const simMessage = document.getElementById('simMessage');
-
-    document.querySelectorAll('.preset-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        simSender.value = btn.dataset.sender;
-        simMessage.value = btn.dataset.msg;
+    stageTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        stageTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentView = tab.getAttribute('data-view');
+        updateFrameSrc();
       });
     });
 
-    simForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const sender = simSender.value.trim();
-      const message = simMessage.value.trim();
+    document.getElementById('reloadFrameBtn')?.addEventListener('click', () => {
+      appFrame.contentWindow?.location.reload();
+    });
+
+    // הזרקת SMS לדוגמה
+    document.getElementById('btnInjectSms')?.addEventListener('click', async () => {
+      const source = document.getElementById('simSource').value.trim() || 'מערכת';
+      const msg = document.getElementById('simMessage').value.trim() || 'הודעה חדשה';
 
       try {
         const res = await fetch('/api/demo/add-sms', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ source: sender, message: message })
+          body: JSON.stringify({ source, message: msg })
         });
-
-        if (res.ok) {
-          // Trigger background check for new SMS immediately
-          chrome.runtime.sendMessage({ action: 'check-now' });
-
-          // Reload popup iframe to show new message
-          const popupIframe = document.getElementById('popupIframe');
-          if (popupIframe && popupIframe.contentWindow) {
-            popupIframe.contentWindow.location.reload();
-          }
-
-          // Switch to popup view to see the message immediately
-          setTimeout(() => {
-            switchTab('popup');
-          }, 300);
+        const data = await res.json();
+        if (data.success) {
+          appFrame.contentWindow?.location.reload();
         }
       } catch (err) {
-        console.error('Error adding mock SMS:', err);
+        console.error(err);
       }
     });
 
-    // Test buttons for v4.6 features
-    const btnTestSendSmsModal = document.getElementById('btnTestSendSmsModal');
-    if (btnTestSendSmsModal) {
-      btnTestSendSmsModal.addEventListener('click', () => {
-        switchTab('popup');
-        setTimeout(() => {
-          const popupIframe = document.getElementById('popupIframe');
-          if (popupIframe && popupIframe.contentWindow && popupIframe.contentWindow.document) {
-            const btn = popupIframe.contentWindow.document.getElementById('openSendSmsBtn');
-            if (btn) btn.click();
-          }
-        }, 300);
-      });
-    }
+    document.getElementById('btnPresetBank')?.addEventListener('click', () => {
+      document.getElementById('simSource').value = 'Leumi-Bank';
+      document.getElementById('simMessage').value = 'קוד אימות חד פעמי לכניסה לחשבון: 948102. בתוקף ל-5 דקות.';
+    });
 
-    const btnTestQuickSnooze = document.getElementById('btnTestQuickSnooze');
-    if (btnTestQuickSnooze) {
-      btnTestQuickSnooze.addEventListener('click', async () => {
-        // Ensure there is at least one message
-        try {
-          await fetch('/api/demo/add-sms', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              source: 'הדגמת-טיימר-4.6',
-              message: 'הודעת הדגמה עבור לקריאה בהמשך (בדיקת צבע אפרפר חלבי והחזרה כלא נקרא)'
-            })
-          });
-        } catch (e) {}
+    document.getElementById('btnPresetBit')?.addEventListener('click', () => {
+      document.getElementById('simSource').value = 'Bit';
+      document.getElementById('simMessage').value = 'הועברה אליך בקשת תשלום. קוד אישור עסקה: 631894.';
+    });
 
-        chrome.storage.local.get(['snoozedItems', 'unreadItems', 'unreadCount'], (data) => {
-          let snoozed = data.snoozedItems || {};
-          let unreadItems = data.unreadItems || [];
-          let unreadCount = data.unreadCount || 0;
-
-          const now = new Date();
-          const pad = (n) => String(n).padStart(2, '0');
-          const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-          const msgId = `${dateStr}_הדגמת-טיימר-4.6`;
-
-          // Wake in 8 seconds
-          const targetTimestamp = Date.now() + 8000;
-          snoozed[msgId] = {
-            wakeTime: targetTimestamp,
-            source: 'הדגמת-טיימר-4.6',
-            message: 'הודעת הדגמה עבור לקריאה בהמשך (בדיקת צבע אפרפר חלבי והחזרה כלא נקרא)',
-            receive_date: dateStr
-          };
-
-          const idx = unreadItems.indexOf(msgId);
-          if (idx > -1) {
-            unreadItems.splice(idx, 1);
-            unreadCount = Math.max(0, unreadCount - 1);
-          }
-
-          chrome.storage.local.set({
-            snoozedItems: snoozed,
-            unreadItems: unreadItems,
-            unreadCount: unreadCount
-          }, () => {
-            // Create alarm for wake time
-            chrome.alarms.create(`snooze_${msgId}`, { when: targetTimestamp });
-
-            switchTab('popup');
-            const popupIframe = document.getElementById('popupIframe');
-            if (popupIframe && popupIframe.contentWindow) {
-              popupIframe.contentWindow.location.reload();
-            }
-          });
-        });
-      });
-    }
-
-    // Initial badge update
-    setTimeout(updateBadgeDisplay, 100);
-    setInterval(updateBadgeDisplay, 3000);
+    document.getElementById('btnPresetPost')?.addEventListener('click', () => {
+      document.getElementById('simSource').value = 'Postal-IL';
+      document.getElementById('simMessage').value = 'חבילה ממתינה עבורך בסניף המרכזי. קוד איסוף: 51042.';
+    });
   </script>
-
-  <footer class="app-footer">
-    PushBox v4.6 (גרסת בטא) &bull; תוסף Chrome לשליפת וניהול SMS ממערכת ימות המשיח &bull; Pre-release (לא מתריע למשתמשים יציבים)
-  </footer>
-
 </body>
 </html>

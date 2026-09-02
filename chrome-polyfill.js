@@ -5,6 +5,11 @@
  */
 
 (function () {
+  // CRITICAL: If running inside a real Chrome Extension, DO NOT polyfill or intercept anything!
+  if (typeof window !== 'undefined' && typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id && window.location && window.location.protocol === 'chrome-extension:') {
+    return;
+  }
+
   const STORAGE_KEY = 'pushbox_storage_data';
   const CHANNEL_NAME = 'pushbox_extension_bus';
 

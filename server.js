@@ -10,6 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // In-memory demo SMS store for testing and preview without live Yemot HaMashiach credentials
 let sentMessagesDemo = [];
@@ -41,13 +42,13 @@ let demoMessages = [
   }
 ];
 
-// Proxy for Yemot HaMashiach API (bypasses browser CORS, supports live tokens and demo mode)
+// Proxy for Yemot HaMashiach API (bypasses browser CORS in preview, forwards live tokens accurately)
 app.all('/proxy-ym/api/:endpoint', async (req, res) => {
   const endpoint = req.params.endpoint;
   const token = req.query.token || req.body?.token || '';
 
-  // If using demo mode token
-  if (!token || token.toLowerCase().includes('demo')) {
+  // Only use demo mode if token is explicitly 'demo' or empty in local preview
+  if (token === 'demo' || token === 'demo_token') {
     if (endpoint === 'GetSession') {
       return res.json({
         responseStatus: 'OK',
@@ -108,15 +109,16 @@ app.all('/proxy-ym/api/:endpoint', async (req, res) => {
   // Forward live request to Call2All (Yemot HaMashiach)
   try {
     const isPost = req.method === 'POST';
-    const queryParams = new URLSearchParams(req.query).toString();
-    const targetUrl = `https://www.call2all.co.il/ym/api/${endpoint}${queryParams ? '?' + queryParams : ''}`;
-    
+    const queryIdx = req.originalUrl.indexOf('?');
+    const rawQuery = queryIdx !== -1 ? req.originalUrl.slice(queryIdx) : '';
+    const targetUrl = `https://www.call2all.co.il/ym/api/${endpoint}${rawQuery}`;
+
     console.log(`[Proxy] Forwarding ${req.method} to: ${targetUrl}`);
     const fetchOptions = {
       method: req.method,
       headers: {
-        'User-Agent': 'PushBox-Extension/4.6',
-        'Accept': 'application/json'
+        'User-Agent': 'PushBox-Extension/4.9',
+        'Accept': 'application/json, text/plain, */*'
       }
     };
 
@@ -126,8 +128,14 @@ app.all('/proxy-ym/api/:endpoint', async (req, res) => {
     }
 
     const apiRes = await fetch(targetUrl, fetchOptions);
-    const data = await apiRes.json();
-    return res.json(data);
+    const textData = await apiRes.text();
+
+    try {
+      const jsonData = JSON.parse(textData);
+      return res.status(apiRes.status).json(jsonData);
+    } catch {
+      return res.status(apiRes.status).send(textData);
+    }
   } catch (error) {
     console.error('[Proxy] Error connecting to Yemot HaMashiach:', error);
     return res.status(502).json({
@@ -158,19 +166,36 @@ app.post('/api/demo/add-sms', (req, res) => {
   res.json({ success: true, message: newMsg });
 });
 
+// Dynamically inject chrome-polyfill.js only when serving HTML files in the browser preview
+// (ensures files on disk remain 100% clean extension files without polyfills)
+app.use((req, res, next) => {
+  if (req.method === 'GET' && req.path.endsWith('.html') && req.path !== '/index.html') {
+    const filePath = path.join(__dirname, req.path);
+    if (fs.existsSync(filePath)) {
+      let content = fs.readFileSync(filePath, 'utf8');
+      if (!content.includes('chrome-polyfill.js')) {
+        content = content.replace('<head>', '<head>\n  <script src="/chrome-polyfill.js"></script>');
+      }
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.send(content);
+    }
+  }
+  next();
+});
+
 // Serve static extension and web files
 app.use(express.static(__dirname));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', app: 'PushBox', version: '4.6' });
+  res.json({ status: 'ok', app: 'PushBox', versions: { stable: '4.6', beta: '4.9' } });
 });
 
-// Fallback to index.html for root navigation
+// Root entry point
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 PushBox server running on http://0.0.0.0:${PORT}`);
+  console.log(`PushBox server running on http://0.0.0.0:${PORT}`);
 });

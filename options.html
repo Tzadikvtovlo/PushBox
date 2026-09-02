@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>הגדרות תוסף - PushBox</title>
-  <script src="chrome-polyfill.js"></script>
   <style>
     :root {
       --primary: #1e3a8a; 
@@ -83,20 +82,6 @@
       background: #6b21a8;
       border-color: #581c87;
       animation: pulse-purple 2s infinite;
-    }
-
-    .beta-badge {
-      font-size: 11px;
-      font-weight: 700;
-      background: #fef3c7;
-      color: #92400e;
-      border: 1px solid #fde68a;
-      border-radius: 6px;
-      padding: 2px 7px;
-      margin-right: 6px;
-      vertical-align: middle;
-      display: inline-block;
-      letter-spacing: normal;
     }
 
     @keyframes pulse-purple {
@@ -236,7 +221,7 @@
       <div class="header-logo">
         <img src="icon48.png" alt="לוגו" style="width: 26px; height: 26px; object-fit: contain; vertical-align: middle;">
       </div>
-      <h2 class="header-title">PushBox <span class="beta-badge">בטא</span></h2>
+      <h2 class="header-title">PushBox</h2>
       <div style="text-align: left;">
         <span id="versionBox" class="version-box" title="לחץ לבדיקת עדכונים">טוען...</span>
       </div>
@@ -270,16 +255,6 @@
         <option value="push">חלון קופץ (Push)</option>
         <option value="badge">עדכון בסמל התוסף</option>
       </select>
-    </div>
-
-    <div class="form-group" style="background: #fdf4ff; border: 1px solid #e9d5ff; border-radius: 8px; padding: 12px; margin-bottom: 20px;">
-      <label for="checkBetaUpdates" style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 0; font-weight: 600; color: #581c87;">
-        <input type="checkbox" id="checkBetaUpdates" style="width: auto; margin: 0; cursor: pointer;">
-        <span>קבלת התראות על גרסאות בטא (Beta / Pre-release)</span>
-      </label>
-      <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px; line-height: 1.4;">
-        כאשר אפשרות זו כבויה (ברירת מחדל), התוסף לא יתריע על גרסאות בטא, אלא רק על גרסאות סופיות יציבות לכולם.
-      </div>
     </div>
     
     <div class="btn-group">

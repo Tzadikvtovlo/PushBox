@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>הגדרות PushBox (גרסת בטא 4.9)</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap">
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #eef2ff;
+      --primary-border: #c7d2fe;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --border-focus: #818cf8;
+      --success-bg: #ecfdf5;
+      --success-text: #065f46;
+      --success-border: #a7f3d0;
+      --error-bg: #fef2f2;
+      --error-text: #991b1b;
+      --error-border: #fecaca;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Rubik', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 32px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 520px;
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.08);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .header {
+      background: #ffffff;
+      padding: 24px 28px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-img {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+    }
+
+    .title-group h1 {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .beta-chip {
+      font-size: 11px;
+      font-weight: 700;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      padding: 2px 7px;
+      letter-spacing: normal;
+    }
+
+    .title-group p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .version-tag {
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 5px 10px;
+      border-radius: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .version-tag:hover {
+      border-color: var(--primary-border);
+      color: var(--primary);
+    }
+
+    .version-tag.update {
+      background: #fff7ed;
+      color: #c2410c;
+      border-color: #ffedd5;
+    }
+
+    .content {
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .icon-svg {
+      width: 15px;
+      height: 15px;
+      color: var(--text-muted);
+      stroke-width: 2;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-control {
+      flex: 1;
+      height: 40px;
+      padding: 0 12px;
+      font-size: 14px;
+      color: var(--text);
+      background-color: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-control:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    }
+
+    .input-control[readonly] {
+      background-color: var(--bg);
+      color: var(--text-muted);
+      cursor: default;
+    }
+
+    .btn {
+      height: 40px;
+      padding: 0 16px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-outline {
+      background-color: #ffffff;
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .btn-outline:hover {
+      background-color: var(--bg);
+      border-color: #cbd5e1;
+    }
+
+    .help-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .footer {
+      background-color: var(--bg);
+      padding: 16px 28px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .footer-link {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .footer-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <div class="brand-section">
+        <img src="icon48.png" alt="PushBox Logo" class="logo-img">
+        <div class="title-group">
+          <h1>
+            PushBox
+            <span class="beta-chip">4.9 בטא</span>
+          </h1>
+          <p>הגדרות תוסף SMS ימות המשיח</p>
+        </div>
+      </div>
+      <div id="versionBox" class="version-tag" title="לחץ לבדיקת עדכונים">v4.9</div>
+    </div>
+
+    <div class="content">
+      <!-- טוקן מערכת -->
+      <div class="form-group">
+        <label class="form-label" for="token">
+          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          טוקן API (Token) של ימות המשיח:
+        </label>
+        <div class="input-row">
+          <input type="text" id="token" class="input-control" placeholder="הזן טוקן כאן..." autocomplete="off">
+          <button id="verifyToken" class="btn btn-outline">
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            אימות
+          </button>
+        </div>
+        <div class="help-text">טוקן המאפשר גישה לשליפת הודעות נכנסות ושליחת SMS במערכת.</div>
+      </div>
+
+      <!-- מספר המערכת שזוהה -->
+      <div class="form-group">
+        <label class="form-label" for="phoneNumber">
+          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+          מספר מערכת שזוהה:
+        </label>
+        <input type="text" id="phoneNumber" class="input-control" readonly placeholder="יתעדכן אוטומטית לאחר אימות...">
+      </div>
+
+      <!-- תדירות בדיקה -->
+      <div class="form-group">
+        <label class="form-label" for="interval">
+          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          תדירות בדיקת SMS ברקע:
+        </label>
+        <select id="interval" class="input-control">
+          <option value="0.5">כל 30 שניות</option>
+          <option value="1">כל דקה (מומלץ)</option>
+          <option value="2">כל 2 דקות</option>
+          <option value="5">כל 5 דקות</option>
+          <option value="10">כל 10 דקות</option>
+        </select>
+      </div>
+
+      <!-- סגנון התראות -->
+      <div class="form-group">
+        <label class="form-label" for="notificationStyle">
+          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          סגנון הצגת התראות:
+        </label>
+        <select id="notificationStyle" class="input-control">
+          <option value="both">שניהם (התראת פוש ומספר על האייקון)</option>
+          <option value="push">רק התראת שולחן עבודה (באנר)</option>
+          <option value="badge">רק מספר על האייקון של התוסף</option>
+          <option value="none">ללא התראות כלל</option>
+        </select>
+      </div>
+
+      <!-- בחירת ערוץ עדכונים (הדרישה החדשה) -->
+      <div class="form-group">
+        <label class="form-label" for="updateChannel">
+          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          התראות על עדכוני גרסה:
+        </label>
+        <select id="updateChannel" class="input-control">
+          <option value="stable">התראה על עדכון רגיל (גרסאות יציבות בלבד)</option>
+          <option value="beta">התראה גם על עדכוני בטא (Beta / Pre-release)</option>
+          <option value="none">בלי התראה בכלל על עדכונים</option>
+        </select>
+        <div class="help-text">בחר האם לקבל התראה רק על גרסאות יציבות רשמיות, לכלול גם גרסאות בטא חדשות, או לכבות עדכונים.</div>
+      </div>
+
+      <!-- כפתורי ניהול נוספים -->
+      <div class="actions-grid">
+        <button id="manageFilters" class="btn btn-outline">
+          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+          ניהול פילטרים
+        </button>
+        <button id="resendNow" class="btn btn-outline">
+          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          התראה חוזרת
+        </button>
+      </div>
+
+      <!-- שמירת הגדרות -->
+      <button id="save" class="btn btn-primary" style="height: 44px; margin-top: 4px;">
+        <svg class="icon-svg" style="color: #ffffff;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+        שמור הגדרות
+      </button>
+    </div>
+
+    <div class="footer">
+      <span>PushBox v4.9 Beta &bull; ימות המשיח</span>
+      <span id="copyEmail" class="footer-link" title="לחץ להעתקת כתובת">q9411aa@gmail.com</span>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

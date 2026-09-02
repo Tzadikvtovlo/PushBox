@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>הודעות SMS - ימות המשיח</title>
-  <script src="chrome-polyfill.js"></script>
   <style>
     :root {
       --primary: #1e3a8a;
@@ -57,22 +56,6 @@
       font-weight: 800;
       color: var(--primary);
       letter-spacing: 0.5px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-
-    .beta-badge {
-      font-size: 11px;
-      font-weight: 700;
-      background: #fef3c7;
-      color: #92400e;
-      border: 1px solid #fde68a;
-      border-radius: 6px;
-      padding: 1px 6px;
-      letter-spacing: normal;
-      line-height: 1.3;
     }
 
     .system-phone-container {
@@ -89,257 +72,10 @@
       gap: 6px;
     }
 
-    .btn-send-sms {
-      background: #f3e8ff;
-      color: #6b21a8;
-      border-color: #d8b4fe;
-      font-weight: 700;
-    }
-    .btn-send-sms:hover {
-      background: #e9d5ff;
-      color: #581c87;
-    }
-
     .actions-row-2 {
       display: flex;
       gap: 6px;
       width: 100%;
-    }
-
-    .filter-tabs-row {
-      display: flex;
-      gap: 4px;
-      overflow-x: auto;
-      padding-bottom: 2px;
-      margin-top: 6px;
-      scrollbar-width: none;
-    }
-    .filter-tabs-row::-webkit-scrollbar { display: none; }
-
-    .filter-pill {
-      background: #ffffff;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 3px 9px;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .filter-pill:hover {
-      background: #f3e8ff;
-      color: var(--primary);
-    }
-    .filter-pill.active {
-      background: #6b21a8;
-      color: #ffffff;
-      border-color: #6b21a8;
-    }
-    .pill-badge {
-      background: rgba(0, 0, 0, 0.15);
-      border-radius: 10px;
-      padding: 0 5px;
-      font-size: 10px;
-      line-height: 1.4;
-    }
-    .filter-pill.active .pill-badge {
-      background: rgba(255, 255, 255, 0.3);
-      color: #ffffff;
-    }
-
-    /* Send SMS Panel */
-    .send-sms-section {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px;
-      margin-top: 10px;
-      box-shadow: 0 4px 14px rgba(107, 33, 168, 0.08);
-      animation: fadeIn 0.2s ease;
-      flex-direction: column;
-      flex: 1;
-      overflow-y: auto;
-    }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-
-    .section-title-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      border-bottom: 1px solid #f3e8ff;
-      padding-bottom: 8px;
-    }
-    .section-title {
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--primary);
-    }
-    .back-btn {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .back-btn:hover {
-      background: #f3e8ff;
-      color: var(--primary);
-    }
-
-    .form-group-sms {
-      margin-bottom: 10px;
-    }
-    .form-group-sms label {
-      display: block;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 4px;
-    }
-    .label-with-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .char-counter {
-      font-size: 10px;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-
-    .form-group-sms input, .form-group-sms textarea {
-      width: 100%;
-      padding: 7px 9px;
-      border-radius: 7px;
-      border: 1px solid var(--border);
-      font-size: 12px;
-      outline: none;
-      background: #faf5ff;
-      box-sizing: border-box;
-      font-family: inherit;
-    }
-    .form-group-sms input:focus, .form-group-sms textarea:focus {
-      border-color: #c084fc;
-      background: #ffffff;
-      box-shadow: 0 0 0 2px rgba(192, 132, 252, 0.2);
-    }
-
-    .quick-templates {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      margin-bottom: 10px;
-    }
-    .template-chip {
-      background: #f3e8ff;
-      border: 1px solid #e9d5ff;
-      border-radius: 12px;
-      padding: 2px 7px;
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--primary);
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-    .template-chip:hover {
-      background: #d8b4fe;
-      color: #581c87;
-    }
-
-    .sms-status-banner {
-      display: none;
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      text-align: center;
-    }
-    .sms-status-banner.success {
-      display: block;
-      background: #dcfce7;
-      color: #166534;
-      border: 1px solid #bbf7d0;
-    }
-    .sms-status-banner.error {
-      display: block;
-      background: #fee2e2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
-    }
-
-    .btn-primary-send {
-      width: 100%;
-      background: #6b21a8;
-      color: #ffffff;
-      border: none;
-      padding: 9px 12px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 800;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    .btn-primary-send:hover {
-      background: #581c87;
-    }
-
-    /* Milky Grayish styling for Snoozed / Read Later cards */
-    .msg-card.snoozed {
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
-      border: 1.5px dashed #cbd5e1 !important;
-      border-right: 6px solid #94a3b8 !important;
-      box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.9), 0 2px 5px rgba(148, 163, 184, 0.12) !important;
-      opacity: 0.92;
-    }
-    .msg-card.snoozed .msg-source {
-      background: #e2e8f0;
-      color: #475569;
-    }
-    .snooze-banner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #f1f5f9;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 11px;
-      color: #475569;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-    .btn-wake-now {
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      border-radius: 4px;
-      padding: 2px 7px;
-      font-size: 10px;
-      cursor: pointer;
-      color: #334155;
-      font-weight: 700;
-      transition: all 0.2s ease;
-    }
-    .btn-wake-now:hover {
-      background: #f3e8ff;
-      border-color: #c084fc;
-      color: #6b21a8;
     }
 
     .search-input {
@@ -575,10 +311,7 @@
       <div class="logo-container">
         <img src="icon48.png" alt="לוגו" class="app-icon">
       </div>
-      <div class="app-title">
-        PushBox
-        <span class="beta-badge">בטא</span>
-      </div>
+      <div class="app-title">PushBox</div>
       <div class="system-phone-container">
         <span id="systemPhone"></span>
       </div>
@@ -593,9 +326,9 @@
         <svg id="refreshIcon" class="svg-icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
         רענן
       </button>
-      <button id="openSendSmsBtn" class="icon-btn btn-send-sms" title="שליחת הודעת SMS">
-        <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-        שלח SMS
+      <button id="resendBtn" class="icon-btn" title="שלח התראת דחיפה להודעה האחרונה">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        שלח
       </button>
     </div>
 
@@ -610,20 +343,6 @@
       </button>
     </div>
 
-    <!-- שורת לשוניות / פילטרים מהירים -->
-    <div class="filter-tabs-row" id="filterTabsRow">
-      <button class="filter-pill active" data-filter="all">הכל</button>
-      <button class="filter-pill" data-filter="unread">
-        לא נקראו <span id="unreadPillCount" class="pill-badge">0</span>
-      </button>
-      <button class="filter-pill" data-filter="snoozed">
-        לקריאה בהמשך ⏰ <span id="snoozedPillCount" class="pill-badge">0</span>
-      </button>
-      <button class="filter-pill" data-filter="sent">
-        נשלחו 📤
-      </button>
-    </div>
-
   </div>
 
   <div id="trashHeader">
@@ -633,51 +352,6 @@
 
   <div id="updateAlertBox" class="update-alert-box">
     עדכון גרסה זמין! לחץ כאן להורדה
-  </div>
-
-  <!-- מסך שליחת SMS -->
-  <div id="sendSmsSection" class="send-sms-section" style="display: none;">
-    <div class="section-title-bar">
-      <button id="closeSendSmsBtn" class="back-btn" title="חזרה להודעות">
-        <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        חזרה
-      </button>
-      <span class="section-title">📤 שליחת הודעת SMS</span>
-      <div style="width: 45px;"></div>
-    </div>
-
-    <form id="sendSmsForm">
-      <div class="form-group-sms">
-        <label for="smsRecipient">מספר נמען / טלפון:</label>
-        <input type="tel" id="smsRecipient" placeholder="למשל: 0501234567" required dir="ltr">
-      </div>
-
-      <div class="form-group-sms">
-        <label for="smsCallerId">מספר שולח מזוהה (Caller ID):</label>
-        <input type="text" id="smsCallerId" placeholder="ברירת מחדל של המערכת" dir="ltr">
-      </div>
-
-      <div class="form-group-sms">
-        <div class="label-with-meta">
-          <label for="smsMessageText">תוכן ההודעה:</label>
-          <span id="charCountLabel" class="char-counter">0 תווים (חלק 1)</span>
-        </div>
-        <textarea id="smsMessageText" rows="3" placeholder="הקלד כאן את תוכן ההודעה..." required></textarea>
-      </div>
-
-      <div class="quick-templates">
-        <span class="template-chip" data-text="שלום, קיבלתי את הודעתך, תודה!">קיבלתי תודה</span>
-        <span class="template-chip" data-text="אחזור אליך בהקדם האפשרי.">אחזור בהקדם</span>
-        <span class="template-chip" data-text="קוד האימות התקבל בהצלחה.">קוד התקבל</span>
-        <span class="template-chip" data-text="אנא צור קשר בהקדם.">נא ליצור קשר</span>
-      </div>
-
-      <div id="sendSmsStatus" class="sms-status-banner"></div>
-
-      <button type="submit" id="submitSendSmsBtn" class="btn-primary-send">
-        <span>🚀 שלח הודעת SMS</span>
-      </button>
-    </form>
   </div>
 
   <div id="messagesList">

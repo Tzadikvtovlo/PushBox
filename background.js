@@ -97,92 +97,50 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
 });
 
-// בדיקת כל הודעות ה-Snooze שזמנן פג והחזרתן למצב 'לא נקרא' עם התראת פוש
-function checkAllExpiredSnoozes() {
-  chrome.storage.local.get(['snoozedItems', 'unreadItems', 'unreadCount', 'notificationStyle'], (data) => {
-    const snoozed = data.snoozedItems || {};
-    let unreadItems = data.unreadItems || [];
-    let unreadCount = data.unreadCount || 0;
-    const notificationStyle = data.notificationStyle || "both";
-    const now = Date.now();
-    let changed = false;
-
-    for (const msgId in snoozed) {
-      const item = snoozed[msgId];
-      const wakeTime = typeof item === 'object' && item !== null ? item.wakeTime : Number(item);
-
-      if (wakeTime && now >= wakeTime) {
-        delete snoozed[msgId];
-        if (!unreadItems.includes(msgId)) {
-          unreadItems.push(msgId);
-          unreadCount += 1;
-        }
-        changed = true;
-
-        // התראת פוש עבור ההודעה שחזרה
-        if (notificationStyle === 'both' || notificationStyle === 'banner') {
-          const sender = (typeof item === 'object' && item?.source) ? item.source : 'מערכת';
-          const msgText = (typeof item === 'object' && item?.message) ? item.message : 'הודעה ששמרת לקריאה בהמשך';
-
-          chrome.storage.local.set({ lastMessageText: msgText });
-
-          chrome.notifications.create('snooze_alert_' + Date.now(), {
-            type: 'basic',
-            iconUrl: 'icon128.png',
-            title: `⏰ לקריאה בהמשך: הודעה מ-${sender}`,
-            message: msgText,
-            priority: 2
-          });
-        }
-      }
-    }
-
-    if (changed) {
-      chrome.storage.local.set({
-        snoozedItems: snoozed,
-        unreadItems: unreadItems,
-        unreadCount: unreadCount
-      }, () => {
-        updateBadgeAndTooltip();
-      });
-    }
-  });
-}
-
 // טיפול בסיום טיימר ה-Snooze והחזרה ללא-נקרא מבוסס זמן מדויק
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM_NAME) {
-    checkAllExpiredSnoozes();
     checkForNewSms(false);
   } else if (alarm.name.startsWith("snooze_")) {
-    checkAllExpiredSnoozes();
+    const msgId = alarm.name.replace("snooze_", "");
+    chrome.storage.local.get(['unreadItems', 'unreadCount', 'snoozedItems'], (data) => {
+      let unreadItems = data.unreadItems || [];
+      let unreadCount = data.unreadCount || 0;
+      let snoozed = data.snoozedItems || {};
+
+      delete snoozed[msgId];
+
+      if (!unreadItems.includes(msgId)) {
+        unreadItems.push(msgId);
+        unreadCount += 1;
+      }
+
+      chrome.storage.local.set({ 
+        unreadItems: unreadItems, 
+        unreadCount: unreadCount,
+        snoozedItems: snoozed 
+      }, () => {
+        updateBadgeAndTooltip();
+        
+        chrome.notifications.create('snooze_alert_' + Date.now(), {
+          type: 'basic',
+          iconUrl: 'icon128.png',
+          title: 'הודעה חזרה לטיפול (Snooze)',
+          message: 'הודעה ששוריינה חזרה לרשימת ההודעות שלא נקראו.',
+          priority: 2
+        });
+      });
+    });
   }
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'check-now' || request.action === 'update-interval') {
-    checkAllExpiredSnoozes();
     checkForNewSms(true).then((hasToken) => {
       sendResponse({ success: hasToken });
     }).catch((err) => {
       console.error(err);
       sendResponse({ success: false });
-    });
-    return true;
-  }
-
-  if (request.action === 'check-snoozes') {
-    checkAllExpiredSnoozes();
-    sendResponse({ success: true });
-    return true;
-  }
-
-  if (request.action === 'send-sms') {
-    const { phones, message, callerId, token } = request;
-    sendSmsViaApi(phones, message, callerId, token).then((res) => {
-      sendResponse(res);
-    }).catch((err) => {
-      sendResponse({ success: false, error: err.message });
     });
     return true;
   }
@@ -197,25 +155,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 });
-
-async function sendSmsViaApi(phones, message, callerId, token) {
-  try {
-    const params = new URLSearchParams({
-      token: token || '',
-      phones: phones || '',
-      message: message || '',
-      callerId: callerId || ''
-    });
-
-    const url = `https://www.call2all.co.il/ym/api/SendSms?${params.toString()}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    return data;
-  } catch (error) {
-    console.error('Error sending SMS via API:', error);
-    return { responseStatus: 'ERROR', message: error.message };
-  }
-}
 
 function showSmsNotification(latestMsg) {
   const codeMatch = latestMsg.message.match(/\b\d{5,8}\b/);
@@ -476,44 +415,21 @@ chrome.notifications.onClicked.addListener(async (notificationId) => {
 async function checkForUpdates() {
   setHourglassBadge();
   try {
-    chrome.storage.local.get(['checkBetaUpdates'], async (settings) => {
-      try {
-        const checkBeta = settings.checkBetaUpdates === true;
-        let remoteVersion = null;
+    const response = await fetch('https://api.github.com/repos/Tzadikvtovlo/PushBox/releases/latest');
+    if (!response.ok) return;
+    const data = await response.json();
+    
+    const localVersion = chrome.runtime.getManifest().version;
+    const remoteVersion = data.tag_name ? data.tag_name.replace(/^v/i, '').trim() : localVersion;
 
-        if (checkBeta) {
-          // משיכת כל השחרורים כולל שחרורי Pre-release / Beta
-          const response = await fetch('https://api.github.com/repos/Tzadikvtovlo/PushBox/releases');
-          if (response.ok) {
-            const releases = await response.json();
-            if (Array.isArray(releases) && releases.length > 0) {
-              remoteVersion = releases[0].tag_name ? releases[0].tag_name.replace(/^v/i, '').trim() : null;
-            }
-          }
-        } else {
-          // ברירת מחדל לכל המשתמשים: שחרורים רשמיים יציבים בלבד (GitHub מוציא שחרורי בטא מ-latest)
-          const response = await fetch('https://api.github.com/repos/Tzadikvtovlo/PushBox/releases/latest');
-          if (response.ok) {
-            const data = await response.json();
-            remoteVersion = data.tag_name ? data.tag_name.replace(/^v/i, '').trim() : null;
-          }
-        }
-        
-        const localVersion = chrome.runtime.getManifest().version;
-
-        if (remoteVersion && isNewerVersion(localVersion, remoteVersion)) {
-          chrome.storage.local.set({ updateAvailable: true });
-        } else {
-          chrome.storage.local.set({ updateAvailable: false });
-        }
-      } catch (error) {
-        console.error("PushBox Update Fetch Error:", error);
-      } finally {
-        updateBadgeAndTooltip();
-      }
-    });
+    if (isNewerVersion(localVersion, remoteVersion)) {
+      chrome.storage.local.set({ updateAvailable: true });
+    } else {
+      chrome.storage.local.set({ updateAvailable: false });
+    }
   } catch (error) {
     console.error("PushBox Update Check Error:", error);
+  } finally {
     updateBadgeAndTooltip(); 
   }
 }

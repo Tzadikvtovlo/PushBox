@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "PushBox (Beta)",
+  "version": "4.9",
+  "version_name": "4.9 Beta",
+  "description": "פושבוקס (גרסת בטא 4.9) - קבלת, שליחה וניהול SMS ממערכת ימות המשיח ישירות לדפדפן ולהתראות שולחן העבודה.",
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications",
+    "offscreen",
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "https://www.call2all.co.il/*",
+    "https://raw.githubusercontent.com/*",
+    "https://api.github.com/*"
+  ],
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "options_page": "options.html"
+}
