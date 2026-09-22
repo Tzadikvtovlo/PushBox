@@ -1,3 +1,66 @@
+name: צור Release לגרסה האחרונה
+
+on:
+  workflow_dispatch: # מאפשר הפעלה ידנית בלחיצת כפתור
+  push:
+    branches:
+      - main # יופעל אוטומטית בעת עדכון ענף main (ניתן לשנות לשם הענף הראשי שלכם)
+    paths:
+      - 'manifest.json' # יופעל אוטומטית רק כשמעדכנים את מספר הגרסה ב-manifest
+
+permissions:
+  contents: write # נדרש כדי לאפשר ל-Action ליצור תגיות ו-Releases
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. משיכת הקוד מהמאגר
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # הגדרה זו מביאה את כל היסטוריית הקומיטים כדי שנוכל לחלץ את הודעת הקומיט
+
+      # 2. קריאת מספר הגרסה מתוך manifest.json ושליפת הודעת הקומיט
+      - name: Get version and commit message from manifest.json
+        id: get_version
+        run: |
+          VERSION=$(jq -r '.version' manifest.json)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "TAG_NAME=v$VERSION" >> $GITHUB_OUTPUT
+          echo "ZIP_NAME=PushBox-v$VERSION.zip" >> $GITHUB_OUTPUT
+          
+          # שליפת הודעת התיעוד (הקומיט) האחרונה שבה התעדכן המניפסט
+          COMMIT_MSG=$(git log -1 --pretty=format:"%B" manifest.json)
+          
+          # שמירת הודעת הקומיט כמשתנה מרובה-שורות (Multiline)
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "COMMIT_MSG<<$EOF" >> $GITHUB_OUTPUT
+          echo "$COMMIT_MSG" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+
+      # 3. אריזת קובצי התוסף הנדרשים + LICENSE לתוך קובץ ZIP
+      - name: Create Extension ZIP
+        run: |
+          ZIP_NAME="${{ steps.get_version.outputs.ZIP_NAME }}"
+          
+          # אריזת כל קובצי ההרחבה החיוניים וקובץ הרישיון
+          zip -r "$ZIP_NAME" \
+            manifest.json \
+            background.js \
+            popup.html popup.js \
+            options.html options.js \
+            filters.html filters.js \
+            contacts.html contacts.js \
+            send_sms.html send_sms.js \
+            offscreen.html offscreen.js \
+            icon16.png icon48.png icon128.png \
+            LICENSE
+
+          echo "הקובץ נארז בהצלחה:"
+          ls -lh "$ZIP_NAME"
+
 # 4. יצירת ה-Release והעלאת קובץ ה-ZIP
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
