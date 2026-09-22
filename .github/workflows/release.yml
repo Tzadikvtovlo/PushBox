@@ -19,15 +19,26 @@ jobs:
       # 1. משיכת הקוד מהמאגר
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # הגדרה זו מביאה את כל היסטוריית הקומיטים כדי שנוכל לחלץ את הודעת הקומיט
 
-      # 2. קריאת מספר הגרסה מתוך manifest.json ובדיקה אם קיים כבר שחרור כזה
-      - name: Get version from manifest.json
+      # 2. קריאת מספר הגרסה מתוך manifest.json ושליפת הודעת הקומיט
+      - name: Get version and commit message from manifest.json
         id: get_version
         run: |
           VERSION=$(jq -r '.version' manifest.json)
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "TAG_NAME=v$VERSION" >> $GITHUB_OUTPUT
           echo "ZIP_NAME=PushBox-v$VERSION.zip" >> $GITHUB_OUTPUT
+          
+          # שליפת הודעת התיעוד (הקומיט) האחרונה שבה התעדכן המניפסט
+          COMMIT_MSG=$(git log -1 --pretty=format:"%B" manifest.json)
+          
+          # שמירת הודעת הקומיט כמשתנה מרובה-שורות (Multiline)
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "COMMIT_MSG<<$EOF" >> $GITHUB_OUTPUT
+          echo "$COMMIT_MSG" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
 
       # 3. אריזת קובצי התוסף הנדרשים + LICENSE לתוך קובץ ZIP
       - name: Create Extension ZIP
@@ -57,9 +68,14 @@ jobs:
           tag_name: ${{ steps.get_version.outputs.TAG_NAME }}
           name: "PushBox ${{ steps.get_version.outputs.TAG_NAME }}"
           body: |
-            ### שחרור גרסה ${{ steps.get_version.outputs.VERSION }}
-            - קובץ ה-ZIP המצורף מכיל את כל קובצי ההרחבה לפעילות מלאה בדפדפן ורישיון השימוש.
-            - **הוראות התקנה:** יש להוריד את קובץ ה-ZIP, לחלץ אותו, להיכנס ב-Chrome ל-`chrome://extensions`, להפעיל מצב מפתח ולטעון את התיקייה שחולצה.
+            > ${{ steps.get_version.outputs.COMMIT_MSG }}
+
+            ### הוראות התקנה:
+            **התקנה חדשה:** 
+            חילוץ התיקיה, הצבה שלה במקום שלא ימחק במחשב - וגרירה לעמוד התוספים בגוגל [chrome://extensions/](chrome://extensions/) (כאשר 'מצב פיתוח' מאושר).
+
+            **עדכון תוסף מותקן:** 
+            חילוץ הקבצים, והדבקתם בתיקית התוסף, תוך דריסה של הקיימים. ולאחמ"כ לחיצה על רענון בסמל התוסף בעמוד התוספים, או סגירה ופתיחה מחדש של הדפדפן.
           files: ${{ steps.get_version.outputs.ZIP_NAME }}
           draft: false
           prerelease: false
