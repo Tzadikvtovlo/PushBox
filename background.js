@@ -1,6 +1,16 @@
 console.log("=== Yemot Background Worker Loaded Successfully ===");
 
 const ALARM_NAME = 'checkYemotSmsAlarm';
+let isPopupOpen = false;
+
+chrome.runtime.onConnect.addListener(port => {
+  if (port.name === "popup") {
+    isPopupOpen = true;
+    port.onDisconnect.addListener(() => {
+      isPopupOpen = false;
+    });
+  }
+});
 
 chrome.runtime.onInstalled.addListener(() => {
   initAlarmAndStorage();
@@ -23,11 +33,12 @@ function setHourglassBadge() {
 }
 
 function updateBadgeAndTooltip() {
-  chrome.storage.local.get(['unreadCount', 'updateAvailable', 'connectionError', 'notificationStyle'], (data) => {
+  chrome.storage.local.get(['unreadCount', 'updateAvailable', 'connectionError', 'notificationStyle', 'updateNotificationStyle'], (data) => {
     const unreadCount = data.unreadCount || 0;
     const updateAvailable = data.updateAvailable || false;
     const connectionError = data.connectionError || "";
     const notificationStyle = data.notificationStyle || "both";
+    const updateStyle = data.updateNotificationStyle || "both";
 
     let text = "";
     let bgColor = "#6b21a8";
@@ -39,7 +50,7 @@ function updateBadgeAndTooltip() {
     } else if (connectionError) {
       text = "X";
       title = connectionError;
-    } else if (updateAvailable) {
+    } else if (updateAvailable && (updateStyle === 'both' || updateStyle === 'badge')) {
       text = "!";
       title = "יש עדכון חדש";
     }
@@ -91,48 +102,46 @@ chrome.storage.onChanged.addListener((changes, area) => {
     if (changes.unreadCount !== undefined || 
         changes.updateAvailable !== undefined || 
         changes.connectionError !== undefined ||
-        changes.notificationStyle !== undefined) {
+        changes.notificationStyle !== undefined ||
+        changes.updateNotificationStyle !== undefined) {
       updateBadgeAndTooltip();
     }
   }
 });
 
-// טיפול בסיום טיימר ה-Snooze והחזרה ללא-נקרא מבוסס זמן מדויק
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM_NAME) {
     checkForNewSms(false);
-  } else if (alarm.name.startsWith("snooze_")) {
-    const msgId = alarm.name.replace("snooze_", "");
-    chrome.storage.local.get(['unreadItems', 'unreadCount', 'snoozedItems'], (data) => {
-      let unreadItems = data.unreadItems || [];
-      let unreadCount = data.unreadCount || 0;
-      let snoozed = data.snoozedItems || {};
-
-      delete snoozed[msgId];
-
-      if (!unreadItems.includes(msgId)) {
-        unreadItems.push(msgId);
-        unreadCount += 1;
-      }
-
-      chrome.storage.local.set({ 
-        unreadItems: unreadItems, 
-        unreadCount: unreadCount,
-        snoozedItems: snoozed 
-      }, () => {
-        updateBadgeAndTooltip();
-        
-        chrome.notifications.create('snooze_alert_' + Date.now(), {
-          type: 'basic',
-          iconUrl: 'icon128.png',
-          title: 'הודעה חזרה לטיפול (Snooze)',
-          message: 'הודעה ששוריינה חזרה לרשימת ההודעות שלא נקראו.',
-          priority: 2
-        });
-      });
-    });
+    checkSnoozedMessages();
   }
 });
+
+function checkSnoozedMessages() {
+  chrome.storage.local.get(['snoozedMessages', 'unreadCount'], (data) => {
+    const snoozed = data.snoozedMessages || {};
+    const now = Date.now();
+    let changed = false;
+    let expiredCount = 0;
+
+    for (const [msgId, msgData] of Object.entries(snoozed)) {
+      if (now >= msgData.alertAt) {
+        showSmsNotification({ message: msgData.message, source: msgData.source }, "תזכורת: הודעה מ ");
+        delete snoozed[msgId];
+        expiredCount++;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      const newUnreadCount = (data.unreadCount || 0) + expiredCount;
+      chrome.storage.local.set({ 
+        snoozedMessages: snoozed,
+        unreadCount: newUnreadCount
+      });
+      chrome.runtime.sendMessage({ action: 'refresh-messages' }).catch(() => {});
+    }
+  });
+}
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'check-now' || request.action === 'update-interval') {
@@ -156,7 +165,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-function showSmsNotification(latestMsg) {
+function showSmsNotification(latestMsg, titlePrefix = "התקבל SMS חדש מ ") {
   const codeMatch = latestMsg.message.match(/\b\d{5,8}\b/);
   const codeText = codeMatch ? codeMatch[0] : null;
   const systemName = latestMsg.source || 'מערכת';
@@ -168,7 +177,7 @@ function showSmsNotification(latestMsg) {
     notifTitle = `התקבל קוד חדש מ ${systemName}`;
     notifMessage = `${latestMsg.message}\n \n \n code is ${codeText}`;
   } else {
-    notifTitle = `התקבל SMS חדש מ ${systemName}`;
+    notifTitle = `${titlePrefix}${systemName}`;
     notifMessage = latestMsg.message;
   }
 
@@ -188,6 +197,24 @@ function showSmsNotification(latestMsg) {
   }, 12000); 
 }
 
+function autoSaveContacts(messages) {
+  chrome.storage.local.get(['contacts'], (data) => {
+    let contacts = data.contacts || [];
+    let changed = false;
+
+    messages.forEach(msg => {
+      if (msg.source && !contacts.find(c => c.phone === msg.source)) {
+        contacts.push({ name: msg.source, phone: msg.source });
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      chrome.storage.local.set({ contacts: contacts });
+    }
+  });
+}
+
 async function checkForNewSms(skipNotification = false) {
   setHourglassBadge();
   return new Promise((resolve, reject) => {
@@ -203,9 +230,7 @@ async function checkForNewSms(skipNotification = false) {
         const url = `https://www.call2all.co.il/ym/api/GetIncomingSms?token=${encodeURIComponent(data.token)}&limit=50`;
         const res = await fetch(url);
         
-        if (!res.ok) {
-           throw new Error("Network error");
-        }
+        if (!res.ok) throw new Error("Network error");
         
         const result = await res.json();
 
@@ -213,6 +238,7 @@ async function checkForNewSms(skipNotification = false) {
           chrome.storage.local.set({ connectionError: "" });
           
           if (result.rows && result.rows.length > 0) {
+            autoSaveContacts(result.rows); 
             const latestMsg = result.rows[0];
             const newLastMessageId = `${latestMsg.receive_date}_${latestMsg.source}`;
             const notificationStyle = data.notificationStyle || "both";
@@ -234,9 +260,7 @@ async function checkForNewSms(skipNotification = false) {
                 let msg = result.rows[i];
                 let msgId = `${msg.receive_date}_${msg.source}`;
                 
-                if (msgId === data.lastMessageId) {
-                  break;
-                }
+                if (msgId === data.lastMessageId) break;
                 
                 let isFiltered = false;
                 for (let f of filters) {
@@ -245,9 +269,7 @@ async function checkForNewSms(skipNotification = false) {
                   if (f.type === 'not_contains' && !msg.message.includes(f.value)) isFiltered = true;
                 }
                 
-                if (!isFiltered) {
-                  newMessagesCount++;
-                }
+                if (!isFiltered) newMessagesCount++;
               }
               
               if (newMessagesCount > 0) {
@@ -261,7 +283,7 @@ async function checkForNewSms(skipNotification = false) {
                 
                 latestMsg.message = latestMsg.message.replace(/(\r?\n){2,}/g, '\n');
                 
-                if (!skipNotification && (notificationStyle === 'both' || notificationStyle === 'push')) {
+                if (!skipNotification && !isPopupOpen && (notificationStyle === 'both' || notificationStyle === 'push')) {
                   showSmsNotification(latestMsg);
                 }
               } else {
