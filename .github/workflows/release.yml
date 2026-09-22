@@ -1,156 +1,68 @@
-name: יצירת שחרור והורדת ZIP (Release ZIP)
+name: צור Release לגרסה האחרונה
 
 on:
-  workflow_dispatch:
-    inputs:
-      release_target:
-        description: 'בחר גרסה לייצור והורדה (בטא או רגיל):'
-        required: true
-        type: choice
-        default: 'בטא (Beta 4.91)'
-        options:
-          - 'בטא (Beta 4.91)'
-          - 'רגיל (Stable 4.6)'
+  workflow_dispatch: # מאפשר הפעלה ידנית בלחיצת כפתור
+  push:
+    branches:
+      - main # יופעל אוטומטית בעת עדכון ענף main (ניתן לשנות לשם הענף הראשי שלכם)
+    paths:
+      - 'manifest.json' # יופעל אוטומטית רק כשמעדכנים את מספר הגרסה ב-manifest
 
 permissions:
-  contents: write
+  contents: write # נדרש כדי לאפשר ל-Action ליצור תגיות ו-Releases
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+
     steps:
+      # 1. משיכת הקוד מהמאגר
       - name: Checkout repository
-        uses: actions/checkout@v4.2.2
-        with:
-          fetch-depth: 0 # חובה כדי להביא את היסטוריית התגיות
+        uses: actions/checkout@v4
 
-      - name: Determine Version and Setup Package Info
-        id: prep
+      # 2. קריאת מספר הגרסה מתוך manifest.json ובדיקה אם קיים כבר שחרור כזה
+      - name: Get version from manifest.json
+        id: get_version
         run: |
-          CHOICE="${{ github.event.inputs.release_target }}"
-          echo "Selected choice: $CHOICE"
-          
-          if [[ "$CHOICE" == *"בטא"* ]] || [[ "$CHOICE" == *"Beta"* ]]; then
-            IS_BETA="true"
-            MANIFEST_PATH="beta/manifest.json"
-            BASE_VERSION=$(jq -r '.version' beta/manifest.json)
-            echo "Building Beta release. Base version: $BASE_VERSION"
-            
-            # בדיקת תגיות קיימות למניעת כפילויות
-            TAG_PREFIX="v${BASE_VERSION}-beta"
-            if git show-ref --tags "refs/tags/$TAG_PREFIX" --quiet; then
-              echo "Tag $TAG_PREFIX exists. Finding next available sub-version..."
-              SAFE_BASE=$(echo "$BASE_VERSION" | sed 's/\./\\./g')
-              LATEST_SUB=$(git tag | grep -E "^v${SAFE_BASE}\.[0-9]+-beta$" | sort -V | tail -n 1)
+          VERSION=$(jq -r '.version' manifest.json)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "TAG_NAME=v$VERSION" >> $GITHUB_OUTPUT
+          echo "ZIP_NAME=PushBox-v$VERSION.zip" >> $GITHUB_OUTPUT
 
-              if [ -z "$LATEST_SUB" ]; then
-                FINAL_VERSION="${BASE_VERSION}.1"
-              else
-                SUB_NUM=$(echo "$LATEST_SUB" | sed 's/-beta$//' | awk -F. '{print $NF}')
-                NEXT_SUB=$((SUB_NUM + 1))
-                FINAL_VERSION="${BASE_VERSION}.${NEXT_SUB}"
-              fi
-            else
-              FINAL_VERSION="$BASE_VERSION"
-            fi
-            
-            FINAL_TAG="v${FINAL_VERSION}-beta"
-            RELEASE_NAME="PushBox v${FINAL_VERSION} (גרסת בטא)"
-            ZIP_NAME="PushBox-v${FINAL_VERSION}-Beta.zip"
-            PRERELEASE="true"
-            
-          else
-            IS_BETA="false"
-            MANIFEST_PATH="manifest.json"
-            BASE_VERSION=$(jq -r '.version' manifest.json)
-            echo "Building Stable release. Base version: $BASE_VERSION"
-            
-            TAG_PREFIX="v${BASE_VERSION}"
-            if git show-ref --tags "refs/tags/$TAG_PREFIX" --quiet; then
-              echo "Tag $TAG_PREFIX exists. Finding next available sub-version..."
-              SAFE_BASE=$(echo "$BASE_VERSION" | sed 's/\./\\./g')
-              LATEST_SUB=$(git tag | grep -E "^v${SAFE_BASE}\.[0-9]+$" | sort -V | tail -n 1)
-
-              if [ -z "$LATEST_SUB" ]; then
-                FINAL_VERSION="${BASE_VERSION}.1"
-              else
-                SUB_NUM=$(echo "$LATEST_SUB" | awk -F. '{print $NF}')
-                NEXT_SUB=$((SUB_NUM + 1))
-                FINAL_VERSION="${BASE_VERSION}.${NEXT_SUB}"
-              fi
-            else
-              FINAL_VERSION="$BASE_VERSION"
-            fi
-            
-            FINAL_TAG="v${FINAL_VERSION}"
-            RELEASE_NAME="PushBox v${FINAL_VERSION} (גרסה רשמית)"
-            ZIP_NAME="PushBox-v${FINAL_VERSION}.zip"
-            PRERELEASE="false"
-          fi
-          
-          echo "IS_BETA=$IS_BETA" >> $GITHUB_OUTPUT
-          echo "MANIFEST_PATH=$MANIFEST_PATH" >> $GITHUB_OUTPUT
-          echo "FINAL_VERSION=$FINAL_VERSION" >> $GITHUB_OUTPUT
-          echo "FINAL_TAG=$FINAL_TAG" >> $GITHUB_OUTPUT
-          echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_OUTPUT
-          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_OUTPUT
-          echo "PRERELEASE=$PRERELEASE" >> $GITHUB_OUTPUT
-          
-          echo "Summary: Target=$FINAL_TAG, Zip=$ZIP_NAME, PreRelease=$PRERELEASE"
-
-      - name: Extract Release Notes
-        id: get_notes
+      # 3. אריזת קובצי התוסף הנדרשים + LICENSE לתוך קובץ ZIP
+      - name: Create Extension ZIP
         run: |
-          MANIFEST_PATH="${{ steps.prep.outputs.MANIFEST_PATH }}"
-          COMMIT_MSG=$(git log -1 --pretty=format:"%B" -- "$MANIFEST_PATH")
+          ZIP_NAME="${{ steps.get_version.outputs.ZIP_NAME }}"
           
-          if [ -z "$COMMIT_MSG" ]; then
-            if [ "${{ steps.prep.outputs.IS_BETA }}" = "true" ]; then
-              COMMIT_MSG="שחרור גרסת בטא חדשה (${{ steps.prep.outputs.FINAL_TAG }})"
-            else
-              COMMIT_MSG="שחרור גרסה יציבה חדשה (${{ steps.prep.outputs.FINAL_TAG }})"
-            fi
-          fi
+          # אריזת כל קובצי ההרחבה החיוניים וקובץ הרישיון
+          zip -r "$ZIP_NAME" \
+            manifest.json \
+            background.js \
+            popup.html popup.js \
+            options.html options.js \
+            filters.html filters.js \
+            contacts.html contacts.js \
+            send_sms.html send_sms.js \
+            offscreen.html offscreen.js \
+            icon16.png icon48.png icon128.png \
+            LICENSE
 
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "RELEASE_NOTES<<$EOF" >> $GITHUB_ENV
-          echo "$COMMIT_MSG" >> $GITHUB_ENV
-          echo "$EOF" >> $GITHUB_ENV
+          echo "הקובץ נארז בהצלחה:"
+          ls -lh "$ZIP_NAME"
 
-      - name: Create ZIP Archive
-        run: |
-          ZIP_NAME="${{ steps.prep.outputs.ZIP_NAME }}"
-          IS_BETA="${{ steps.prep.outputs.IS_BETA }}"
-          
-          if [ "$IS_BETA" = "true" ]; then
-            echo "Packaging beta folder contents into $ZIP_NAME..."
-            cd beta
-            zip -r "../$ZIP_NAME" . -x "*.git*"
-            cd ..
-          else
-            echo "Packaging stable files into $ZIP_NAME..."
-            zip -r "$ZIP_NAME" manifest.json popup.html popup.js options.html options.js filters.html filters.js background.js offscreen.html offscreen.js icon16.png icon48.png icon128.png
-          fi
-          
-          ls -la "$ZIP_NAME"
-
-      # שמירת קובץ ה-ZIP ב-Artifacts של ה-Action (הורדה ישירה בלחיצה אחת מתוך דף ה-Actions)
-      - name: Upload ZIP as Action Artifact
-        uses: actions/upload-artifact@v4
+      # 4. יצירת ה-Release והעלאת קובץ ה-ZIP
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: ${{ steps.prep.outputs.ZIP_NAME }}
-          path: ${{ steps.prep.outputs.ZIP_NAME }}
-          retention-days: 90
-
-      # יצירת ה-Release ב-GitHub עם קובץ ה-ZIP מצורף
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2.1.0
-        with:
-          tag_name: "${{ steps.prep.outputs.FINAL_TAG }}"
-          name: "${{ steps.prep.outputs.RELEASE_NAME }}"
-          body: "${{ env.RELEASE_NOTES }}"
-          files: "${{ steps.prep.outputs.ZIP_NAME }}"
-          prerelease: ${{ steps.prep.outputs.PRERELEASE == 'true' }}
-          make_latest: ${{ steps.prep.outputs.IS_BETA != 'true' }}
+          tag_name: ${{ steps.get_version.outputs.TAG_NAME }}
+          name: "PushBox ${{ steps.get_version.outputs.TAG_NAME }}"
+          body: |
+            ### שחרור גרסה ${{ steps.get_version.outputs.VERSION }}
+            - קובץ ה-ZIP המצורף מכיל את כל קובצי ההרחבה לפעילות מלאה בדפדפן ורישיון השימוש.
+            - **הוראות התקנה:** יש להוריד את קובץ ה-ZIP, לחלץ אותו, להיכנס ב-Chrome ל-`chrome://extensions`, להפעיל מצב מפתח ולטעון את התיקייה שחולצה.
+          files: ${{ steps.get_version.outputs.ZIP_NAME }}
+          draft: false
+          prerelease: false
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
