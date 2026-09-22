@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>ניהול אנשי קשר - PushBox</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@700;800&display=swap');
+
+    :root {
+      --primary: #1e3a8a; 
+      --purple-main: #6b21a8;
+      --purple-hover: #581c87;
+      --bg: #faf5ff; 
+      --surface: #ffffff;
+      --text: #0f172a;
+      --border: #e9d5ff; 
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); padding: 40px 20px; direction: rtl; margin: 0; }
+    
+    .container {
+      background: var(--surface); padding: 30px; border-radius: var(--radius);
+      max-width: 500px; width: 100%; margin: 0 auto;
+      box-shadow: 0 10px 25px -5px rgba(107, 33, 168, 0.05); border: 1px solid var(--border);
+    }
+    
+    .header { display: grid; grid-template-columns: 28px 1fr 28px; align-items: center; margin-bottom: 24px; border-bottom: 2px solid var(--bg); padding-bottom: 14px; }
+    .header-title { margin: 0; color: var(--primary); font-family: 'Heebo', sans-serif; font-size: 24px; font-weight: 800; letter-spacing: 0.5px; text-align: center; }
+    
+    .update-alert-box {
+      display: none; text-align: center; background: #6b21a8; color: white; padding: 10px;
+      border-radius: var(--radius); margin: 0 auto 20px auto; max-width: 500px;
+      font-weight: 700; font-size: 14px; cursor: pointer; animation: pulse-purple 2s infinite;
+    }
+    .update-alert-box:hover { background: #581c87; }
+    @keyframes pulse-purple {
+      0% { box-shadow: 0 0 0 0 rgba(107, 33, 168, 0.6); }
+      70% { box-shadow: 0 0 0 6px rgba(107, 33, 168, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(107, 33, 168, 0); }
+    }
+
+    .top-nav-buttons { display: flex; gap: 8px; margin-bottom: 24px; }
+    .top-nav-buttons button {
+      flex: 1; border: none; padding: 11px 8px; border-radius: 8px; cursor: pointer;
+      font-size: 13px; font-weight: 700; transition: all 0.2s ease; display: inline-flex;
+      align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+    }
+    .btn-secondary { background: #f3e8ff; color: var(--primary); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #e9d5ff; color: var(--purple-main); border-color: #c084fc; }
+
+    .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+    input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background-color: #faf5ff; outline: none; transition: all 0.2s ease; }
+    input:focus { border-color: #c084fc; background-color: #fff; }
+    .btn-add { background: #f3e8ff; color: var(--primary); border: 1px solid var(--border); padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 700; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; }
+    .btn-add:hover { background: #e9d5ff; border-color: #c084fc; }
+    .contacts-list { margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px; }
+    .contact-item { display: flex; justify-content: space-between; align-items: center; background: #f3e8ff; border: 1px solid #d8b4fe; padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; }
+    .contact-details { display: flex; flex-direction: column; flex: 1; }
+    .contact-name { font-weight: bold; font-size: 14px; color: var(--primary); }
+    .contact-phone { font-size: 12px; color: var(--purple-hover); direction: ltr; text-align: right; }
+    
+    .contact-actions { display: flex; gap: 4px; }
+    .btn-action { background: #fff; color: var(--purple-hover); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; cursor: pointer; font-size: 12px; font-weight: bold; transition: all 0.2s ease; display:flex; align-items:center; gap: 4px;}
+    .btn-action:hover { background: #e9d5ff; border-color: #c084fc; }
+    .btn-action-delete { color: #9f1239; }
+    .btn-action-delete:hover { background: #fce7f3; border-color: #fbcfe8; }
+
+    /* תוקן: האייקון לא נחתך (flex-shrink: 0) */
+    .svg-icon { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    
+    .editing-mode { border: 2px dashed #c084fc; background: #fff; }
+  </style>
+</head>
+<body>
+  <div id="updateAlertBox" class="update-alert-box">
+    עדכון גרסה זמין! לחץ כאן להורדה
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <div style="text-align: right; width: 28px;">
+        <img src="icon48.png" alt="לוגו" style="width: 28px; height: 28px; object-fit: contain; vertical-align: middle;">
+      </div>
+      <h2 class="header-title">אנשי קשר</h2>
+      <div style="text-align: left; width: 28px; display: flex; justify-content: flex-end; align-items: center;">
+        <svg class="svg-icon" viewBox="0 0 24 24" style="stroke: var(--purple-main);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      </div>
+    </div>
+
+    <div class="top-nav-buttons">
+      <button id="navOptions" class="btn-secondary">
+        <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> הגדרות
+      </button>
+      <button id="navFilters" class="btn-secondary">
+        <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg> מסננים
+      </button>
+      <button id="navSendSms" class="btn-secondary">
+        <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> שלח SMS
+      </button>
+    </div>
+
+    <div class="form-row">
+      <input type="text" id="contactName" placeholder="שם איש הקשר">
+      <input type="text" id="contactPhone" placeholder="מספר נייד / שולח">
+    </div>
+    
+    <button id="addContactBtn" class="btn-add">
+      <svg class="svg-icon" id="btnIcon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      <span id="btnText">שמור איש קשר חדש</span>
+    </button>
+
+    <div class="contacts-list">
+      <h3 style="font-size: 15px; color: var(--purple-main); margin-top: 0;">רשימה:</h3>
+      <div id="contactsContainer"></div>
+    </div>
+  </div>
+  <script src="contacts.js"></script>
+</body>
+</html>
