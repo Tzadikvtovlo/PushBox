@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "PushBox",
-  "version": "4.6",
-  "description": "פושבוקס - קבלת וניהול SMS ממערכת ימות המשיח ישירות לדפדפן ולהתראות שולחן העבודה.",
+  "version": "5.0",
+  "description": "פושבוקס - ניהול הודעות SMS ממערכת ימות המשיח ישירות בדפדפן.",
   "permissions": [
     "storage",
     "alarms",
