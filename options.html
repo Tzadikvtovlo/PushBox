@@ -4,9 +4,12 @@
   <meta charset="UTF-8">
   <title>הגדרות תוסף - PushBox</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@700;800&display=swap');
+    
     :root {
       --primary: #1e3a8a; 
-      --primary-hover: #1e40af;
+      --purple-main: #6b21a8;
+      --purple-hover: #581c87;
       --bg: #faf5ff; 
       --surface: #ffffff;
       --text: #0f172a;
@@ -30,7 +33,8 @@
       background: var(--surface);
       padding: 30px;
       border-radius: var(--radius);
-      max-width: 460px;
+      max-width: 500px;
+      width: 100%;
       margin: 0 auto;
       box-shadow: 0 10px 25px -5px rgba(107, 33, 168, 0.05), 0 8px 10px -6px rgba(107, 33, 168, 0.02);
       border: 1px solid var(--border);
@@ -38,193 +42,104 @@
 
     .header {
       display: grid;
-      grid-template-columns: 1fr auto 1fr;
+      grid-template-columns: 28px 1fr 28px;
       align-items: center;
       margin-bottom: 24px;
       border-bottom: 2px solid var(--bg);
       padding-bottom: 14px;
     }
 
-    .header-logo {
-      text-align: right;
-    }
-
     .header-title {
-      text-align: center;
       margin: 0;
       color: var(--primary);
-      font-size: 20px;
+      font-family: 'Heebo', sans-serif;
+      font-size: 24px;
       font-weight: 800;
       letter-spacing: 0.5px;
+      text-align: center;
     }
 
-    .version-box {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--primary);
-      background: #f3e8ff;
-      padding: 6px 10px;
-      border-radius: 8px;
-      border: 1px solid #d8b4fe;
-      display: inline-block;
-      transition: all 0.2s ease;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .version-box:hover {
-      background: #e9d5ff;
-      border-color: #c084fc;
-    }
-    
-    .version-box.update {
-      color: #ffffff;
+    .update-alert-box {
+      display: none;
+      text-align: center;
       background: #6b21a8;
-      border-color: #581c87;
+      color: white;
+      padding: 10px;
+      border-radius: var(--radius);
+      margin: 0 auto 20px auto;
+      max-width: 500px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
       animation: pulse-purple 2s infinite;
     }
-
+    .update-alert-box:hover { background: #581c87; }
+    
     @keyframes pulse-purple {
       0% { box-shadow: 0 0 0 0 rgba(107, 33, 168, 0.6); }
       70% { box-shadow: 0 0 0 6px rgba(107, 33, 168, 0); }
       100% { box-shadow: 0 0 0 0 rgba(107, 33, 168, 0); }
     }
 
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: #334155;
-      font-size: 14px;
-    }
-
+    .form-group { margin-bottom: 20px; }
+    .form-row { display: flex; gap: 10px; margin-bottom: 20px; }
+    
+    label { display: block; margin-bottom: 8px; font-weight: 600; color: #334155; font-size: 14px; }
     input, select {
-      width: 100%;
-      padding: 11px 14px;
-      box-sizing: border-box;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      background-color: #faf5ff;
-      color: var(--text);
-      transition: all 0.2s ease;
-      outline: none;
+      width: 100%; padding: 11px 14px; box-sizing: border-box; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 14px; background-color: #faf5ff; color: var(--text);
+      transition: all 0.2s ease; outline: none;
     }
+    input:focus, select:focus { border-color: #c084fc; background-color: #fff; box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.15); }
+    input[readonly] { background-color: #f3e8ff; border-color: #d8b4fe; color: #581c87; cursor: default; text-align: center; font-weight: 800; letter-spacing: 1px; }
 
-    input:focus, select:focus {
-      border-color: #c084fc;
-      background-color: #fff;
-      box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.15);
-    }
-
-    input[readonly] {
-      background-color: #f3e8ff; 
-      border-color: #d8b4fe;
-      color: #581c87;
-      cursor: default;
-      text-align: center;
-      font-weight: 800;
-      letter-spacing: 1px;
-    }
-
-    input[readonly]:focus {
-      box-shadow: none;
-    }
-
-    .btn-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 24px;
-    }
-
+    .btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
+    .top-nav-buttons { display: flex; gap: 8px; margin-bottom: 24px; }
+    
     button {
-      flex: 1 1 45%;
-      border: none;
-      padding: 11px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      transition: all 0.2s ease;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      white-space: nowrap;
+      flex: 1; border: none; padding: 11px 8px; border-radius: 8px; cursor: pointer;
+      font-size: 13px; font-weight: 700; transition: all 0.2s ease; display: inline-flex;
+      align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
     }
+    .btn-secondary { background: #f3e8ff; color: var(--primary); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #e9d5ff; color: var(--purple-main); border-color: #c084fc; }
 
-    .btn-secondary {
-      background: #f3e8ff;
-      color: var(--primary);
-      border: 1px solid var(--border);
-    }
+    .svg-icon { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; overflow: visible; }
 
-    .btn-secondary:hover {
-      background: #e9d5ff;
-      color: #1e3a8a;
-      border-color: #c084fc;
-    }
-
-    .svg-icon {
-      width: 16px;
-      height: 16px;
-      stroke: currentColor;
-      stroke-width: 2;
-      fill: none;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      flex-shrink: 0;
-    }
-
-    .footer {
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border);
-      text-align: center;
-      font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.8;
-    }
-
-    .footer a {
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    .footer a:hover {
-      text-decoration: underline;
-    }
-
-    .email-copy {
-      color: var(--primary);
-      font-weight: bold;
-      cursor: pointer;
-      direction: ltr;
-      display: inline-block;
-    }
-
-    .email-copy:hover {
-      text-decoration: underline;
-    }
+    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border); text-align: center; font-size: 12px; color: var(--text-muted); line-height: 1.8; }
+    .footer a { color: var(--primary); text-decoration: none; font-weight: bold; }
+    .footer a:hover { text-decoration: underline; }
+    .email-copy { color: var(--primary); font-weight: bold; cursor: pointer; direction: ltr; display: inline-block; }
+    .email-copy:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
+  <div id="updateAlertBox" class="update-alert-box">
+    עדכון גרסה זמין! לחץ כאן להורדה
+  </div>
+
   <div class="container">
-    
     <div class="header">
-      <div class="header-logo">
-        <img src="icon48.png" alt="לוגו" style="width: 26px; height: 26px; object-fit: contain; vertical-align: middle;">
+      <div style="text-align: right; width: 28px;">
+        <img src="icon48.png" alt="לוגו" style="width: 28px; height: 28px; object-fit: contain; vertical-align: middle;">
       </div>
-      <h2 class="header-title">PushBox</h2>
-      <div style="text-align: left;">
-        <span id="versionBox" class="version-box" title="לחץ לבדיקת עדכונים">טוען...</span>
+      <h2 class="header-title">הגדרות</h2>
+      <div style="text-align: left; width: 28px; display: flex; justify-content: flex-end; align-items: center;">
+        <svg class="svg-icon" viewBox="0 0 24 24" style="width: 28px; height: 28px; stroke: var(--purple-main);"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       </div>
+    </div>
+
+    <!-- כפתורי ניווט עליונים - מציג רק דפים אחרים -->
+    <div class="top-nav-buttons">
+      <button id="navContacts" class="btn-secondary">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> אנשי קשר
+      </button>
+      <button id="navFilters" class="btn-secondary">
+        <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg> מסננים
+      </button>
+      <button id="navSendSms" class="btn-secondary">
+        <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> שלח SMS
+      </button>
     </div>
     
     <div class="form-group">
@@ -232,9 +147,15 @@
       <input type="text" id="token" placeholder="הכנס טוקן מערכת כאן">
     </div>
 
-    <div class="form-group">
-      <label for="phoneNumber">מספר הטלפון של המערכת:</label>
-      <input type="text" id="phoneNumber" placeholder="ישלף אוטומטית מהמערכת..." readonly title="מספר זה מעודכן אוטומטית בהתאם לטוקן">
+    <div class="form-row">
+      <div class="form-group" style="flex: 2; margin-bottom: 0;">
+        <label for="phoneNumber">מספר המערכת:</label>
+        <input type="text" id="phoneNumber" placeholder="ישלף אוטומטית..." readonly title="מספר זה מעודכן אוטומטית בהתאם לטוקן">
+      </div>
+      <div class="form-group" style="flex: 1; margin-bottom: 0;">
+        <label for="installedVersion">גרסה מותקנת:</label>
+        <input type="text" id="installedVersion" readonly style="direction: ltr; font-weight: bold; color: var(--purple-main);">
+      </div>
     </div>
     
     <div class="form-group">
@@ -256,6 +177,16 @@
         <option value="badge">עדכון בסמל התוסף</option>
       </select>
     </div>
+
+    <div class="form-group">
+      <label for="updateNotificationStyle">התראות עבור גרסה חדשה (עדכונים):</label>
+      <select id="updateNotificationStyle">
+        <option value="both">באנר בפופ-אפ וסמל התוסף</option>
+        <option value="popup">באנר בפופ-אפ בלבד</option>
+        <option value="badge">סמל התוסף בלבד</option>
+        <option value="none">ללא התראות (רק בדף הגדרות)</option>
+      </select>
+    </div>
     
     <div class="btn-group">
       <button id="verifyToken" class="btn-secondary">
@@ -263,12 +194,6 @@
       </button>
       <button id="save" class="btn-secondary">
         <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> שמור
-      </button>
-      <button id="manageFilters" class="btn-secondary">
-        <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg> מסננים
-      </button>
-      <button id="resendNow" class="btn-secondary">
-        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg> שלח
       </button>
     </div>
 
