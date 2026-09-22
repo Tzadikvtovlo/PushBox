@@ -4,8 +4,29 @@ document.addEventListener('DOMContentLoaded', () => {
   const filterValue = document.getElementById('filterValue');
   const addFilterBtn = document.getElementById('addFilterBtn');
   const filtersContainer = document.getElementById('filtersContainer');
+  const datalist = document.getElementById('filterContactsDatalist');
 
-  // שינוי תווית קלט טקסט בהתאם לבחירה
+  chrome.storage.local.get(['updateAvailable'], (data) => {
+    if (data.updateAvailable) {
+      const alertBox = document.getElementById('updateAlertBox');
+      if (alertBox) {
+        alertBox.style.display = 'block';
+        const currentVersion = chrome.runtime.getManifest().version;
+        fetch('https://api.github.com/repos/Tzadikvtovlo/PushBox/releases/latest')
+          .then(res => res.json())
+          .then(releaseData => {
+             const latestVersion = releaseData.tag_name ? releaseData.tag_name.replace(/^v/i, '').trim() : currentVersion;
+             alertBox.textContent = `יש עדכון! מותקן: v${currentVersion} | זמין: v${latestVersion}`;
+          }).catch(() => { alertBox.textContent = "עדכון גרסה זמין! לחץ כאן להורדה"; });
+        alertBox.addEventListener('click', () => { window.open('https://github.com/Tzadikvtovlo/PushBox/releases', '_blank'); });
+      }
+    }
+  });
+
+  document.getElementById('navOptions').addEventListener('click', () => { window.location.href = 'options.html'; });
+  document.getElementById('navContacts').addEventListener('click', () => { window.location.href = 'contacts.html'; });
+  document.getElementById('navSendSms').addEventListener('click', () => { window.location.href = 'send_sms.html'; });
+
   filterType.addEventListener('change', () => {
     if(filterType.value === 'sender') {
       valueLabel.textContent = 'השולח:';
@@ -22,11 +43,24 @@ document.addEventListener('DOMContentLoaded', () => {
     filterType.dispatchEvent(new Event('change'));
   }
 
+  chrome.storage.local.get(['contacts'], (data) => {
+    const contacts = data.contacts || [];
+    contacts.forEach(c => {
+      const option = document.createElement('option');
+      option.value = `${c.name} - ${c.phone}`;
+      if (datalist) datalist.appendChild(option);
+    });
+  });
+
   loadFilters();
 
   addFilterBtn.addEventListener('click', () => {
     const type = filterType.value;
-    const value = filterValue.value.trim();
+    let value = filterValue.value.trim();
+
+    if (type === 'sender' && value.includes(' - ')) {
+      value = value.split(' - ')[1].trim();
+    }
 
     if (!value) return alert('נא להזין ערך לסינון');
 
@@ -43,10 +77,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function loadFilters() {
     chrome.storage.local.get(['smsFilters'], (data) => {
       const filters = data.smsFilters || [];
-      filtersContainer.innerHTML = '';
+      if (filtersContainer) filtersContainer.innerHTML = '';
 
       if (filters.length === 0) {
-        filtersContainer.innerHTML = '<div style="text-align:center; color:#64748b; font-size:13px;">אין מסננים פעילים.</div>';
+        if (filtersContainer) filtersContainer.innerHTML = '<div style="text-align:center; color:#64748b; font-size:13px;">אין מסננים פעילים.</div>';
         return;
       }
 
@@ -63,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="filter-text">${typeText} "${filter.value}"</span>
           <button class="btn-delete" data-index="${index}">הסר</button>
         `;
-        filtersContainer.appendChild(item);
+        if (filtersContainer) filtersContainer.appendChild(item);
       });
 
       document.querySelectorAll('.btn-delete').forEach(btn => {
