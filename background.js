@@ -163,6 +163,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true;
   }
+
+  if (request.action === 'open-side-panel') {
+    chrome.sidePanel.open({ windowId: request.windowId }).catch(console.error);
+    return true;
+  }
 });
 
 function showSmsNotification(latestMsg, titlePrefix = "התקבל SMS חדש מ ") {
@@ -185,7 +190,7 @@ function showSmsNotification(latestMsg, titlePrefix = "התקבל SMS חדש מ 
 
   chrome.notifications.create(notifId, {
     type: 'basic',
-    iconUrl: 'icon128.png',
+    iconUrl: 'icon/icon128.png',
     title: notifTitle,
     message: notifMessage,
     priority: 2,
@@ -407,7 +412,7 @@ chrome.notifications.onClicked.addListener(async (notificationId) => {
         if (success) {
           chrome.notifications.create('copy_success_' + Date.now(), {
             type: 'basic',
-            iconUrl: 'icon48.png',
+            iconUrl: 'icon/icon48.png',
             title: 'הקוד הועתק בהצלחה!',
             message: `קוד האימות (${code}) נמצא כעת בלוח ההדבקה.`,
             priority: 2
@@ -415,7 +420,7 @@ chrome.notifications.onClicked.addListener(async (notificationId) => {
         } else {
           chrome.notifications.create('copy_error_' + Date.now(), {
             type: 'basic',
-            iconUrl: 'icon48.png',
+            iconUrl: 'icon/icon48.png',
             title: 'שגיאה בהעתקת הקוד',
             message: 'לא ניתן היה לגשת ללוח ההדבקה אוטומטית.',
             priority: 1
@@ -424,7 +429,7 @@ chrome.notifications.onClicked.addListener(async (notificationId) => {
       } else {
         chrome.notifications.create('no_code_' + Date.now(), {
           type: 'basic',
-          iconUrl: 'icon48.png',
+          iconUrl: 'icon/icon48.png',
           title: 'לא נמצא קוד',
           message: 'לא נמצאה סדרת ספרות באורך 5-8 בהודעה האחרונה.',
           priority: 1
