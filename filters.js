@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  document.getElementById('navHome').addEventListener('click', () => { window.location.href = 'sidepanel.html'; });
   document.getElementById('navOptions').addEventListener('click', () => { window.location.href = 'options.html'; });
   document.getElementById('navContacts').addEventListener('click', () => { window.location.href = 'contacts.html'; });
   document.getElementById('navSendSms').addEventListener('click', () => { window.location.href = 'send_sms.html'; });
