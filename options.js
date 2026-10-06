@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 2000);
   }
 
+  document.getElementById('navHome').addEventListener('click', () => { window.location.href = 'sidepanel.html'; });
   document.getElementById('navContacts').addEventListener('click', () => { window.location.href = 'contacts.html'; });
   document.getElementById('navFilters').addEventListener('click', () => { window.location.href = 'filters.html'; });
   document.getElementById('navSendSms').addEventListener('click', () => { window.location.href = 'send_sms.html'; });
