@@ -48,6 +48,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const smsBodyInput = document.getElementById('smsBody');
   const trashHeader = document.getElementById('trashHeader');
   const openDedicatedSmsBtn = document.getElementById('openDedicatedSmsBtn');
+  const openSidePanelBtn = document.getElementById('openSidePanelBtn');
+
+  // פתיחת חלונית צד וסגירת הפופ-אפ האוטומטית
+  if (openSidePanelBtn) {
+    openSidePanelBtn.addEventListener('click', () => {
+      chrome.windows.getCurrent({ populate: true }, (window) => {
+        chrome.runtime.sendMessage({ action: 'open-side-panel', windowId: window.id });
+        self.close(); // סוגר את הפופ-אפ הנוכחי
+      });
+    });
+  }
 
   chrome.storage.local.get(['draftSmsTo', 'draftSmsBody'], (data) => {
     if (data.draftSmsTo) smsToInput.value = data.draftSmsTo;
@@ -323,7 +334,6 @@ function renderMessages() {
     const rotateStyle = isCardCollapsed ? "transform: rotate(180deg);" : "";
     const displayName = contactsMap[msg.source] || msg.source;
 
-    // הרכבת כפתורי ה-Snooze - תלוי אם כבר מסומן או לא
     let snoozeActionsHtml = '';
     if (isSnoozed) {
       snoozeActionsHtml = `
@@ -342,7 +352,7 @@ function renderMessages() {
       <div class="msg-header">
         <div class="msg-source-wrapper"><span class="msg-source" title="${msg.source}">${displayName}</span></div>
         <div class="msg-controls">
-          <button class="ctrl-btn reply-msg-btn" title="השב (שלח SMS)">
+          <button class="ctrl-btn reply-msg-btn" title="השב (שלח SMS בחלון חדש)">
             <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
           </button>
           <button class="ctrl-btn filter-msg-btn" title="סנן שולח זה">
