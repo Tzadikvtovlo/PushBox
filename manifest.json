@@ -1,33 +1,37 @@
 {
   "manifest_version": 3,
   "name": "PushBox",
-  "version": "5.0",
+  "version": "5.5",
   "description": "פושבוקס - ניהול הודעות SMS ממערכת ימות המשיח ישירות בדפדפן.",
   "permissions": [
     "storage",
     "alarms",
     "notifications",
     "offscreen",
-    "clipboardWrite"
+    "clipboardWrite",
+    "sidePanel"
   ],
   "host_permissions": [
     "https://www.call2all.co.il/*",
     "https://raw.githubusercontent.com/*"
   ],
   "icons": {
-    "16": "icon16.png",
-    "48": "icon48.png",
-    "128": "icon128.png"
+    "16": "icon/icon16.png",
+    "48": "icon/icon48.png",
+    "128": "icon/icon128.png"
   },
   "background": {
     "service_worker": "background.js"
   },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icon16.png",
-      "48": "icon48.png",
-      "128": "icon128.png"
+      "16": "icon/icon16.png",
+      "48": "icon/icon48.png",
+      "128": "icon/icon128.png"
     }
   },
   "options_page": "options.html"
