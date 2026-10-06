@@ -27,6 +27,7 @@
       padding: 40px 20px;
       direction: rtl;
       margin: 0;
+      min-height: 100vh;
     }
 
     .container {
@@ -38,6 +39,9 @@
       margin: 0 auto;
       box-shadow: 0 10px 25px -5px rgba(107, 33, 168, 0.05), 0 8px 10px -6px rgba(107, 33, 168, 0.02);
       border: 1px solid var(--border);
+      min-height: calc(100vh - 80px);
+      display: flex;
+      flex-direction: column;
     }
 
     .header {
@@ -47,6 +51,7 @@
       margin-bottom: 24px;
       border-bottom: 2px solid var(--bg);
       padding-bottom: 14px;
+      flex-shrink: 0;
     }
 
     .header-title {
@@ -72,6 +77,7 @@
       font-size: 14px;
       cursor: pointer;
       animation: pulse-purple 2s infinite;
+      flex-shrink: 0;
     }
     .update-alert-box:hover { background: #581c87; }
     
@@ -80,6 +86,22 @@
       70% { box-shadow: 0 0 0 6px rgba(107, 33, 168, 0); }
       100% { box-shadow: 0 0 0 0 rgba(107, 33, 168, 0); }
     }
+
+    .top-nav-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-shrink: 0;
+    }
+    
+    .top-nav-buttons button {
+      border: none; padding: 11px 8px; border-radius: 8px; cursor: pointer;
+      font-size: 13px; font-weight: 700; transition: all 0.2s ease; display: inline-flex;
+      align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+    }
+    .btn-secondary { background: #f3e8ff; color: var(--primary); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #e9d5ff; color: var(--purple-main); border-color: #c084fc; }
 
     .form-group { margin-bottom: 20px; }
     .form-row { display: flex; gap: 10px; margin-bottom: 20px; }
@@ -93,24 +115,20 @@
     input:focus, select:focus { border-color: #c084fc; background-color: #fff; box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.15); }
     input[readonly] { background-color: #f3e8ff; border-color: #d8b4fe; color: #581c87; cursor: default; text-align: center; font-weight: 800; letter-spacing: 1px; }
 
-    .btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
-    .top-nav-buttons { display: flex; gap: 8px; margin-bottom: 24px; }
-    
-    button {
-      flex: 1; border: none; padding: 11px 8px; border-radius: 8px; cursor: pointer;
-      font-size: 13px; font-weight: 700; transition: all 0.2s ease; display: inline-flex;
-      align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
-    }
-    .btn-secondary { background: #f3e8ff; color: var(--primary); border: 1px solid var(--border); }
-    .btn-secondary:hover { background: #e9d5ff; color: var(--purple-main); border-color: #c084fc; }
-
+    .btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
     .svg-icon { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; overflow: visible; }
 
-    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border); text-align: center; font-size: 12px; color: var(--text-muted); line-height: 1.8; }
+    .footer { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border); text-align: center; font-size: 12px; color: var(--text-muted); line-height: 1.8; }
     .footer a { color: var(--primary); text-decoration: none; font-weight: bold; }
     .footer a:hover { text-decoration: underline; }
     .email-copy { color: var(--primary); font-weight: bold; cursor: pointer; direction: ltr; display: inline-block; }
     .email-copy:hover { text-decoration: underline; }
+
+    @media (max-width: 450px) {
+      body { padding: 15px 10px; }
+      .container { padding: 20px 15px; border-radius: 8px; min-height: calc(100vh - 30px); }
+      .form-row { flex-direction: column; }
+    }
   </style>
 </head>
 <body>
@@ -121,7 +139,7 @@
   <div class="container">
     <div class="header">
       <div style="text-align: right; width: 28px;">
-        <img src="icon48.png" alt="לוגו" style="width: 28px; height: 28px; object-fit: contain; vertical-align: middle;">
+        <img src="icon/icon48.png" alt="לוגו" style="width: 28px; height: 28px; object-fit: contain; vertical-align: middle;">
       </div>
       <h2 class="header-title">הגדרות</h2>
       <div style="text-align: left; width: 28px; display: flex; justify-content: flex-end; align-items: center;">
@@ -129,8 +147,11 @@
       </div>
     </div>
 
-    <!-- כפתורי ניווט עליונים - מציג רק דפים אחרים -->
+    <!-- כפתורי ניווט עליונים - גריד 2x2 -->
     <div class="top-nav-buttons">
+      <button id="navHome" class="btn-secondary">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> הודעות
+      </button>
       <button id="navContacts" class="btn-secondary">
         <svg class="svg-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> אנשי קשר
       </button>
@@ -189,10 +210,10 @@
     </div>
     
     <div class="btn-group">
-      <button id="verifyToken" class="btn-secondary">
+      <button id="verifyToken" class="btn-secondary" style="flex:1;">
         <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> אמת טוקן
       </button>
-      <button id="save" class="btn-secondary">
+      <button id="save" class="btn-secondary" style="flex:1;">
         <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> שמור
       </button>
     </div>
