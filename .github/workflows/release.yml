@@ -1,80 +1,68 @@
 name: צור Release לגרסה האחרונה
 
 on:
-  workflow_dispatch: # מאפשר הפעלה ידנית בלחיצת כפתור[cite: 1]
+  workflow_dispatch:
   push:
     branches:
-      - main # יופעל אוטומטית בעת עדכון ענף main[cite: 1]
+      - main
     paths:
-      - 'manifest.json' # יופעל אוטומטית רק כשמעדכנים את מספר הגרסה ב-manifest[cite: 1]
+      - 'manifest.json'
 
 permissions:
-  contents: write # נדרש כדי לאפשר ל-Action ליצור תגיות ו-Releases[cite: 1]
+  contents: write
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. משיכת הקוד מהמאגר[cite: 1]
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # הגדרה זו מביאה את כל היסטוריית הקומיטים כדי שנוכל לחלץ את הודעת הקומיט[cite: 1]
+          fetch-depth: 0
 
-      # 2. בדיקת גרסה, ואם היא קיימת – העלאתה ב-0.01 ושמירת המניפסט
       - name: Check version and bump if exists
         id: version_logic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION=$(jq -r '.version' manifest.json)
           
-          # בדיקה מול המאגר האם כבר קיימת תגית עם מספר הגרסה הנוכחי
-          if git ls-remote --tags origin refs/tags/v$VERSION | grep -q "refs/tags/v$VERSION"; then
-            echo "הגרסה v$VERSION כבר קיימת. מעלה את המספר ב-0.01..."
+          # בדיקה מול עמוד ה-Releases בגיטהאב האם השחרור כבר קיים
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "הגרסה v$VERSION כבר קיימת בעמוד ההורדות. מעלה את המספר ב-0.01..."
             
-            # חישוב הגרסה החדשה (הנחה שמבנה הגרסה הוא עשרוני, למשל 3.1)
             NEW_VERSION=$(awk "BEGIN {printf \"%.2f\", $VERSION + 0.01}")
             echo "הגרסה החדשה היא: $NEW_VERSION"
             
-            # עדכון קובץ המניפסט
             jq ".version = \"$NEW_VERSION\"" manifest.json > tmp.json && mv tmp.json manifest.json
             
-            # הגדרת משתמש בוט לטובת הקומיט
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             
-            # ביצוע קומיט ודחיפה למאגר
             git add manifest.json
             git commit -m "Auto-bump version to $NEW_VERSION [skip ci]"
             git push
             
-            # עדכון המשתנה המקומי לגרסה החדשה
             VERSION=$NEW_VERSION
+          else
+            echo "לא קיים שחרור v$VERSION בעמוד ההורדות. משתמש בגרסה הנוכחית."
           fi
           
-          # הגדרת פלטים לשלבים הבאים
           echo "TAG_NAME=v$VERSION" >> $GITHUB_OUTPUT
           echo "ZIP_NAME=PushBox v$VERSION.zip" >> $GITHUB_OUTPUT
           
-          # שליפת הודעת התיעוד (הקומיט) האחרונה[cite: 1]
           COMMIT_MSG=$(git log -1 --pretty=format:"%B")
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           echo "COMMIT_MSG<<$EOF" >> $GITHUB_OUTPUT
           echo "$COMMIT_MSG" >> $GITHUB_OUTPUT
           echo "$EOF" >> $GITHUB_OUTPUT
 
-      # 3. אריזת כלל הפרויקט למעט קבצים שאינם נדרשים לתוסף
       - name: Create Extension ZIP
         run: |
           ZIP_NAME="${{ steps.version_logic.outputs.ZIP_NAME }}"
-          
-          # אריזת כל הפרויקט, תוך החרגת תיקיית גיטהאב, תיקיית גיט, קובץ הרדמי והזיפ עצמו
           zip -r "$ZIP_NAME" . -x "README.md" -x "readme.md" -x ".github/*" -x ".git/*" -x "$ZIP_NAME"
 
-          echo "הקובץ נארז בהצלחה:"
-          ls -lh "$ZIP_NAME"
-
-      # 4. יצירת ה-Release והעלאת קובץ ה-ZIP ללשונית ההורדות ב-GitHub[cite: 1]
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
