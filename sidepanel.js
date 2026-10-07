@@ -1,3 +1,12 @@
+// ניתוב אוטומטי במקרה שנפתח מחלון ספציפי (לשמירה על הדף המבוקש)
+chrome.storage.local.get(['targetSidePanelPage'], (data) => {
+  if (data.targetSidePanelPage && !data.targetSidePanelPage.includes('sidepanel.html')) {
+    let target = data.targetSidePanelPage;
+    chrome.storage.local.remove('targetSidePanelPage');
+    window.location.replace(target);
+  }
+});
+
 const port = chrome.runtime.connect({ name: "popup" });
 
 let currentSearchQuery = "";
@@ -6,6 +15,7 @@ let deletedMessages = [];
 let snoozedMessages = {};
 let collapsedMessages = [];
 let isTrashView = false;
+let isSnoozedView = false;
 let allMessages = []; 
 let isAllCollapsed = false;
 let contactsMap = {};
@@ -13,14 +23,68 @@ let contactsMap = {};
 document.addEventListener('DOMContentLoaded', () => {
   chrome.storage.local.set({ unreadCount: 0 });
 
-  document.getElementById('navOptions').addEventListener('click', () => { window.location.href = 'options.html'; });
-  document.getElementById('navContacts').addEventListener('click', () => { window.location.href = 'contacts.html'; });
-  document.getElementById('navFilters').addEventListener('click', () => { window.location.href = 'filters.html'; });
-  document.getElementById('navSendSms').addEventListener('click', () => { window.location.href = 'send_sms.html'; });
+  chrome.storage.local.get(['updateAvailable'], (data) => {
+    if (data.updateAvailable) {
+      const alertBox = document.getElementById('updateAlertBox');
+      if (alertBox) {
+        alertBox.style.display = 'block';
+        const currentVersion = chrome.runtime.getManifest().version;
+        fetch('https://api.github.com/repos/Tzadikvtovlo/PushBox/releases/latest')
+          .then(res => res.json())
+          .then(releaseData => {
+             const latestVersion = releaseData.tag_name ? releaseData.tag_name.replace(/^v/i, '').trim() : currentVersion;
+             alertBox.textContent = `יש עדכון! מותקן: v${currentVersion} | זמין: v${latestVersion}`;
+             alertBox.title = "לחץ כאן להורדה";
+          }).catch(() => {
+             alertBox.textContent = "עדכון גרסה זמין! לחץ כאן להורדה";
+          });
+        alertBox.addEventListener('click', () => { window.open('https://github.com/Tzadikvtovlo/PushBox/releases/latest/download/PushBox.zip', '_blank'); });
+      }
+    }
+  });
+
+  document.getElementById('navHome')?.addEventListener('click', () => { window.location.href = 'messages.html'; });
+  document.getElementById('navSendSms')?.addEventListener('click', () => { window.location.href = 'send_sms.html'; });
+  document.getElementById('navFax')?.addEventListener('click', () => { window.location.href = 'fax.html'; });
+  document.getElementById('navOptions')?.addEventListener('click', () => { window.location.href = 'options.html'; });
+  document.getElementById('navContacts')?.addEventListener('click', () => { window.location.href = 'contacts.html'; });
+  document.getElementById('navFilters')?.addEventListener('click', () => { window.location.href = 'filters.html'; });
+  
+  // לוגיקת הכפתור השביעי
+  const toggleViewBtn = document.getElementById('navToggleView');
+  if (toggleViewBtn) {
+    if (window.innerWidth < 800) {
+      toggleViewBtn.innerHTML = `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
+      toggleViewBtn.title = "פתח במסך מלא";
+      toggleViewBtn.addEventListener('click', () => { 
+        const currentPage = window.location.pathname.split('/').pop() || 'messages.html';
+        chrome.tabs.create({ url: currentPage + window.location.search }); 
+      });
+    } else {
+      toggleViewBtn.innerHTML = `<svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="15" y1="3" x2="15" y2="21"></line></svg>`;
+      toggleViewBtn.title = "פתח בחלונית צד";
+      toggleViewBtn.addEventListener('click', () => {
+        const currentPage = window.location.pathname.split('/').pop() || 'messages.html';
+        chrome.storage.local.set({ targetSidePanelPage: currentPage + window.location.search }, () => {
+          chrome.windows.getCurrent({ populate: true }, (window) => {
+            chrome.runtime.sendMessage({ action: 'open-side-panel', windowId: window.id });
+          });
+        });
+      });
+    }
+  }
 
   const messagesList = document.getElementById('messagesList');
   const searchInput = document.getElementById('searchInput');
   const trashHeader = document.getElementById('trashHeader');
+
+  // קריאת חיפוש אוטומטי במידה ונשלח ב-URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const searchParam = urlParams.get('search');
+  if (searchParam) {
+    currentSearchQuery = searchParam.toLowerCase();
+    searchInput.value = searchParam;
+  }
 
   document.getElementById('refreshBtn').addEventListener('click', () => {
     const icon = document.getElementById('refreshIcon');
@@ -43,6 +107,18 @@ document.addEventListener('DOMContentLoaded', () => {
      
      renderMessages();
   });
+
+  // כפתור סינון הודעות בטיפול (מושהות)
+  const snoozedBtn = document.getElementById('snoozedFilterBtn');
+  if (snoozedBtn) {
+    snoozedBtn.addEventListener('click', () => {
+      isSnoozedView = !isSnoozedView;
+      snoozedBtn.style.background = isSnoozedView ? '#f3e8ff' : '#ffffff';
+      snoozedBtn.style.borderColor = isSnoozedView ? '#d8b4fe' : 'var(--border)';
+      snoozedBtn.style.color = isSnoozedView ? 'var(--primary)' : 'var(--text-muted)';
+      renderMessages();
+    });
+  }
 
   document.getElementById('toggleAllBtn').addEventListener('click', () => {
     isAllCollapsed = !isAllCollapsed;
@@ -67,6 +143,15 @@ document.addEventListener('DOMContentLoaded', () => {
   searchInput.addEventListener('input', (e) => {
     currentSearchQuery = e.target.value.toLowerCase();
     renderMessages();
+  });
+
+  document.querySelectorAll('.email-copy').forEach(el => {
+    el.addEventListener('click', (e) => {
+      navigator.clipboard.writeText(e.target.innerText);
+      const originalText = e.target.innerText;
+      e.target.innerText = "הועתק!";
+      setTimeout(() => e.target.innerText = originalText, 1500);
+    });
   });
 
   chrome.storage.local.get(['smsFilters', 'deletedMessages', 'snoozedMessages', 'collapsedMessages', 'contacts'], (data) => {
@@ -122,6 +207,11 @@ function renderMessages() {
   let filteredMessages = allMessages.filter(msg => {
     const msgId = `${msg.receive_date}_${msg.source}`;
     const isDeleted = deletedMessages.includes(msgId);
+    const isSnoozed = snoozedMessages.hasOwnProperty(msgId);
+
+    if (isSnoozedView) {
+      if (!isSnoozed) return false;
+    }
 
     if (isTrashView) {
       if (!isDeleted) return false;
@@ -148,6 +238,8 @@ function renderMessages() {
   if (filteredMessages.length === 0) {
     if (isTrashView) {
       container.innerHTML = '<div class="empty">סל המחזור ריק.</div>';
+    } else if (isSnoozedView) {
+      container.innerHTML = '<div class="empty">אין הודעות הממתינות לטיפול.</div>';
     } else {
       container.innerHTML = '<div class="empty">אין הודעות המותאמות לסינון/לחיפוש.</div>';
     }
