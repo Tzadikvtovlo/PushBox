@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     chrome.storage.local.get(['token'], async (data) => {
       if (!data.token) {
-        showFeedback("לא נמצא טוקן מחובר. היכנס להגדרות התוסף.", false);
+        showFeedback("לא נמצא טוקן מחוברש. היכנס להגדרות התוסף.", false);
         sendBtn.innerHTML = '<svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> שלח הודעה';
         sendBtn.style.pointerEvents = 'auto';
         return;
