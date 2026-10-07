@@ -72,7 +72,8 @@
     .btn-delete { background: #ffffff; color: #9f1239; border: 1px solid #fbcfe8; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 12px; font-weight: bold; transition: all 0.2s ease; flex-shrink: 0;}
     .btn-delete:hover { background: #fce7f3; border-color: #f9a8d4; }
 
-    .svg-icon { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    /* תמיד 18px לכל האייקונים בדף */
+    .svg-icon { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
     @media (max-width: 450px) {
       body { padding: 15px 10px; }
@@ -92,11 +93,10 @@
       </div>
       <h2 class="header-title">ניהול מסננים</h2>
       <div style="text-align: left; width: 28px; display: flex; justify-content: flex-end; align-items: center;">
-         <svg class="svg-icon" viewBox="0 0 24 24" style="stroke: var(--purple-main);"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+         <svg class="svg-icon" viewBox="0 0 24 24" style="width: 28px; height: 28px; stroke: var(--purple-main);"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
       </div>
     </div>
 
-    <!-- כפתורי ניווט לחלונית צד, מסודרים כעת בשורות יפות של 2 על 2 -->
     <div class="top-nav-buttons">
       <button id="navHome" class="btn-secondary">
         <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> הודעות
