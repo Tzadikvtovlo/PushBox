@@ -17,23 +17,15 @@
       --radius: 12px;
     }
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); padding: 40px 20px; direction: rtl; margin: 0; min-height: 100vh;}
-    
-    .container {
-      background: var(--surface); padding: 30px; border-radius: var(--radius);
-      max-width: 500px; width: 100%; margin: 0 auto;
-      box-shadow: 0 10px 25px -5px rgba(107, 33, 168, 0.05); border: 1px solid var(--border);
-      min-height: calc(100vh - 80px);
-      display: flex;
-      flex-direction: column;
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      background: var(--bg); color: var(--text); padding: 40px 20px; direction: rtl; 
+      margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column;
     }
-    
-    .header { display: grid; grid-template-columns: 28px 1fr 28px; align-items: center; margin-bottom: 24px; border-bottom: 2px solid var(--bg); padding-bottom: 14px; flex-shrink: 0;}
-    .header-title { margin: 0; color: var(--primary); font-family: 'Heebo', sans-serif; font-size: 24px; font-weight: 800; letter-spacing: 0.5px; text-align: center; }
     
     .update-alert-box {
       display: none; text-align: center; background: #6b21a8; color: white; padding: 10px;
-      border-radius: var(--radius); margin: 0 auto 20px auto; max-width: 500px;
+      border-radius: var(--radius); margin: 0 auto 20px auto; max-width: 600px; width: 100%;
       font-weight: 700; font-size: 14px; cursor: pointer; animation: pulse-purple 2s infinite;
       flex-shrink: 0;
     }
@@ -44,29 +36,51 @@
       100% { box-shadow: 0 0 0 0 rgba(107, 33, 168, 0); }
     }
 
+    .container {
+      background: var(--surface); padding: 30px; border-radius: var(--radius);
+      max-width: 600px; width: 100%; margin: 0 auto;
+      box-shadow: 0 10px 25px -5px rgba(107, 33, 168, 0.05); border: 1px solid var(--border);
+      height: 100%; display: flex; flex-direction: column; overflow: hidden;
+      animation: fadeSlide 0.25s ease-out;
+    }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .header { display: grid; grid-template-columns: 28px 1fr 28px; align-items: center; margin-bottom: 24px; border-bottom: 2px solid var(--bg); padding-bottom: 14px; flex-shrink: 0;}
+    .header-title { margin: 0; color: var(--primary); font-family: 'Heebo', sans-serif; font-size: 24px; font-weight: 800; letter-spacing: 0.5px; text-align: center; }
+    
+    /* ניווט - 7 כפתורים בשורה */
     .top-nav-buttons {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
       margin-bottom: 24px;
       flex-shrink: 0;
     }
+
     .top-nav-buttons button {
-      border: none; padding: 11px 8px; border-radius: 8px; cursor: pointer;
-      font-size: 13px; font-weight: 700; transition: all 0.2s ease; display: inline-flex;
-      align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+      border: none; padding: 12px 0; border-radius: 8px; cursor: pointer;
+      transition: all 0.2s ease; display: inline-flex;
+      align-items: center; justify-content: center;
     }
     .btn-secondary { background: #f3e8ff; color: var(--primary); border: 1px solid var(--border); }
     .btn-secondary:hover { background: #e9d5ff; color: var(--purple-main); border-color: #c084fc; }
+    .btn-active { background: var(--purple-main) !important; color: #fff !important; border-color: var(--purple-hover) !important; }
 
     .form-row { display: flex; gap: 10px; margin-bottom: 10px; flex-shrink: 0;}
     input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background-color: #faf5ff; outline: none; transition: all 0.2s ease; }
-    input:focus { border-color: #c084fc; background-color: #fff; }
+    input:focus { border-color: #c084fc; background: #fff; }
     .btn-add { background: #f3e8ff; color: var(--primary); border: 1px solid var(--border); padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 700; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; flex-shrink: 0;}
     .btn-add:hover { background: #e9d5ff; border-color: #c084fc; }
     
     .contacts-list { margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px; flex: 1; overflow-y: auto;}
-    .contact-item { display: flex; justify-content: space-between; align-items: center; background: #f3e8ff; border: 1px solid #d8b4fe; padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;}
+    .contacts-list::-webkit-scrollbar { width: 6px; }
+    .contacts-list::-webkit-scrollbar-thumb { background: #d8b4fe; border-radius: 4px; }
+    
+    .contact-item { display: flex; justify-content: space-between; align-items: center; background: #f3e8ff; border: 1px solid #d8b4fe; padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; flex-shrink: 0;}
     .contact-details { display: flex; flex-direction: column; flex: 1; min-width: 120px;}
     .contact-name { font-weight: bold; font-size: 14px; color: var(--primary); }
     .contact-phone { font-size: 12px; color: var(--purple-hover); direction: ltr; text-align: right; }
@@ -77,13 +91,18 @@
     .btn-action-delete { color: #9f1239; }
     .btn-action-delete:hover { background: #fce7f3; border-color: #fbcfe8; }
 
-    /* תמיד 18px לכל האייקונים בדף */
     .svg-icon { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
     .editing-mode { border: 2px dashed #c084fc; background: #fff; }
 
+    .footer { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border); text-align: center; font-size: 12px; color: #475569; line-height: 1.8; flex-shrink: 0; }
+    .footer a { color: var(--primary); text-decoration: none; font-weight: bold; }
+    .footer a:hover { text-decoration: underline; }
+    .email-copy { color: var(--primary); font-weight: bold; cursor: pointer; direction: ltr; display: inline-block; }
+    .email-copy:hover { text-decoration: underline; }
+
     @media (max-width: 450px) {
       body { padding: 15px 10px; }
-      .container { padding: 20px 15px; border-radius: 8px; min-height: calc(100vh - 30px); }
+      .container { padding: 20px 15px; border-radius: 8px; }
       .form-row { flex-direction: column; }
     }
   </style>
@@ -104,19 +123,27 @@
       </div>
     </div>
 
+    <!-- כפתורי הניווט -->
     <div class="top-nav-buttons">
-      <button id="navHome" class="btn-secondary">
-        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> הודעות
+      <button id="navHome" class="btn-secondary" title="הודעות">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
       </button>
-      <button id="navOptions" class="btn-secondary">
-        <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> הגדרות
+      <button id="navSendSms" class="btn-secondary" title="שליחה">
+        <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
       </button>
-      <button id="navFilters" class="btn-secondary">
-        <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg> מסננים
+      <button id="navFax" class="btn-secondary" title="פקס">
+        <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
       </button>
-      <button id="navSendSms" class="btn-secondary">
-        <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> שלח SMS
+      <button id="navOptions" class="btn-secondary" title="הגדרות">
+        <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       </button>
+      <button id="navContacts" class="btn-secondary btn-active" title="אנשי קשר">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      </button>
+      <button id="navFilters" class="btn-secondary" title="מסננים">
+        <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+      </button>
+      <button id="navToggleView" class="btn-secondary" title="החלף תצוגה"></button>
     </div>
 
     <div class="form-row">
@@ -132,6 +159,12 @@
     <div class="contacts-list">
       <h3 style="font-size: 15px; color: var(--purple-main); margin-top: 0;">רשימה:</h3>
       <div id="contactsContainer"></div>
+    </div>
+
+    <div class="footer">
+      <div>כל הזכויות שמורות</div>
+      <div><a href="https://github.com/Tzadikvtovlo" target="_blank">צדיק וטוב לו</a></div>
+      <div><span class="email-copy" title="לחץ להעתקת המייל ללוח">q9411aa@gmail.com</span></div>
     </div>
   </div>
   <script src="contacts.js"></script>
