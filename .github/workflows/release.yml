@@ -21,7 +21,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Determine Version
+      - name: Determine Version and Names
         id: version_logic
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -30,26 +30,32 @@ jobs:
           EXT_NAME=$(jq -r '.name' manifest.json)
           BASE_VERSION=$(jq -r '.version' manifest.json)
           
+          # חילוץ שם הפרויקט/המאגר ב-GitHub
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
+          
           echo "שם התוסף שנמצא: $EXT_NAME"
           echo "גרסת הבסיס במניפסט: $BASE_VERSION"
+          echo "שם הפרויקט ב-GitHub: $REPO_NAME"
           
-          # הגדרת משתנה הגרסה לשימוש באריזה
           VERSION=$BASE_VERSION
           
           # בדיקה האם הגרסה כבר קיימת בעמוד ההורדות ב-GitHub
           if gh release view "v$BASE_VERSION" >/dev/null 2>&1; then
             echo "הגרסה v$BASE_VERSION כבר קיימת בהורדות."
-            # חישוב הגרסה החדשה רק עבור שם הקובץ והשחרור (ללא נגיעה במניפסט)
             VERSION=$(awk "BEGIN {printf \"%.2f\", $BASE_VERSION + 0.01}")
-            echo "מחשב גרסה חדשה לאריזה: $VERSION"
+            echo "מחשב גרסה חדשה לפרטי השחרור: $VERSION"
           else
             echo "הגרסה לא קיימת בהורדות. ממשיך עם גרסת הבסיס."
           fi
           
-          # יצירת שם הקובץ (שם התוסף + v + גרסה)
-          ZIP_NAME="${EXT_NAME} v${VERSION}.zip"
+          # שם קובץ ה-ZIP קבוע לפי שם הפרויקט ב-GitHub
+          ZIP_NAME="${REPO_NAME}.zip"
+          
+          # שם השחרור המוצג בהורדות
+          RELEASE_NAME="${EXT_NAME} v${VERSION}"
           
           echo "TAG_NAME=v$VERSION" >> $GITHUB_OUTPUT
+          echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_OUTPUT
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_OUTPUT
           
           # שליפת הודעת התיעוד מהקומיט האחרון
@@ -63,7 +69,7 @@ jobs:
         run: |
           ZIP_NAME="${{ steps.version_logic.outputs.ZIP_NAME }}"
           
-          # אריזת הקבצים, החרגת קבצי מערכת, תיעוד, וקובץ הזיפ עצמו
+          # אריזת הקבצים לשם הקבוע, החרגת קבצי מערכת, תיעוד וקובץ הזיפ
           zip -r "$ZIP_NAME" . -x "README.md" -x "readme.md" -x ".github/*" -x ".git/*" -x "*.zip"
           
           echo "נארז בהצלחה: $ZIP_NAME"
@@ -72,7 +78,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version_logic.outputs.TAG_NAME }}
-          name: "גרסה ${{ steps.version_logic.outputs.TAG_NAME }}"
+          name: ${{ steps.version_logic.outputs.RELEASE_NAME }}
           body: |
             <div dir="rtl">
 
@@ -86,7 +92,7 @@ jobs:
             חילוץ הקבצים, והדבקתם בתיקית התוסף, תוך דריסה של הקיימים. ולאחמ"כ לחיצה על רענון בסמל התוסף בעמוד התוספים, או סגירה ופתיחה מחדש של הדפדפן.
 
             </div>
-          files: "*.zip"
+          files: ${{ steps.version_logic.outputs.ZIP_NAME }}
           draft: false
           prerelease: false
           make_latest: true
