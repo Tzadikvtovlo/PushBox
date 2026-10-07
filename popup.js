@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }).catch(() => {
            alertBox.textContent = "עדכון גרסה זמין! לחץ כאן להורדה";
         });
-      alertBox.addEventListener('click', () => { window.open('https://github.com/Tzadikvtovlo/PushBox/releases', '_blank'); });
+      alertBox.addEventListener('click', () => { window.open('https://github.com/Tzadikvtovlo/PushBox/releases/latest/download/PushBox.zip', '_blank'); });
     }
   });
 
@@ -48,17 +48,30 @@ document.addEventListener('DOMContentLoaded', () => {
   const smsBodyInput = document.getElementById('smsBody');
   const trashHeader = document.getElementById('trashHeader');
   const openDedicatedSmsBtn = document.getElementById('openDedicatedSmsBtn');
-  const openSidePanelBtn = document.getElementById('openSidePanelBtn');
+  
+  // פתיחת התוסף במסך מלא והפניה לדף ההודעות
+  const openFullPageBtn = document.getElementById('openFullPageBtn');
+  if (openFullPageBtn) {
+    openFullPageBtn.addEventListener('click', () => {
+      chrome.tabs.create({ url: 'messages.html' });
+      self.close();
+    });
+  }
 
-  // פתיחת חלונית צד וסגירת הפופ-אפ האוטומטית
-  if (openSidePanelBtn) {
-    openSidePanelBtn.addEventListener('click', () => {
-      chrome.windows.getCurrent({ populate: true }, (window) => {
+  // פתיחת חלונית צד לדפים האחרים ישירות מהפופ-אפ
+  function openSidePanelPage(page) {
+    chrome.windows.getCurrent({ populate: true }, (window) => {
+      chrome.storage.local.set({ targetSidePanelPage: page }, () => {
         chrome.runtime.sendMessage({ action: 'open-side-panel', windowId: window.id });
-        self.close(); // סוגר את הפופ-אפ הנוכחי
+        self.close();
       });
     });
   }
+
+  document.getElementById('navFax')?.addEventListener('click', () => openSidePanelPage('fax.html'));
+  document.getElementById('navOptions')?.addEventListener('click', () => openSidePanelPage('options.html'));
+  document.getElementById('navContacts')?.addEventListener('click', () => openSidePanelPage('contacts.html'));
+  document.getElementById('navFilters')?.addEventListener('click', () => openSidePanelPage('filters.html'));
 
   chrome.storage.local.get(['draftSmsTo', 'draftSmsBody'], (data) => {
     if (data.draftSmsTo) smsToInput.value = data.draftSmsTo;
@@ -161,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.runtime.sendMessage({ action: 'resend-latest-sms' });
   });
 
+  // כפתור סל מחזור
   document.getElementById('trashBtn').addEventListener('click', () => {
      if (isComposeView) toggleComposeView();
      isTrashView = !isTrashView;
@@ -252,6 +266,7 @@ function renderMessages() {
   let filteredMessages = allMessages.filter(msg => {
     const msgId = `${msg.receive_date}_${msg.source}`;
     const isDeleted = deletedMessages.includes(msgId);
+    const isSnoozed = snoozedMessages.hasOwnProperty(msgId);
 
     if (isTrashView) {
       if (!isDeleted) return false;
