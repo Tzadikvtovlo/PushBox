@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>פקסים נכנסים - PushBox</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@700;800&display=swap');
+
+    :root {
+      --primary: #1e3a8a;
+      --purple-main: #6b21a8;
+      --purple-hover: #581c87;
+      --bg: #faf5ff;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --border: #e9d5ff;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 40px 20px;
+      direction: rtl;
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .update-alert-box {
+      display: none; text-align: center; background: #6b21a8; color: white; padding: 10px;
+      border-radius: var(--radius); margin: 0 auto 20px auto; max-width: 600px; width: 100%;
+      font-weight: 700; font-size: 14px; cursor: pointer; animation: pulse-purple 2s infinite;
+      flex-shrink: 0;
+    }
+    .update-alert-box:hover { background: #581c87; }
+    @keyframes pulse-purple {
+      0% { box-shadow: 0 0 0 0 rgba(107, 33, 168, 0.6); }
+      70% { box-shadow: 0 0 0 6px rgba(107, 33, 168, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(107, 33, 168, 0); }
+    }
+
+    .container {
+      background: var(--surface);
+      padding: 30px;
+      border-radius: var(--radius);
+      max-width: 600px;
+      width: 100%;
+      margin: 0 auto;
+      box-shadow: 0 10px 25px -5px rgba(107, 33, 168, 0.05);
+      border: 1px solid var(--border);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: fadeSlide 0.25s ease-out;
+    }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .header {
+      display: grid;
+      grid-template-columns: 28px 1fr 28px;
+      align-items: center;
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--bg);
+      padding-bottom: 14px;
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      margin: 0;
+      color: var(--primary);
+      font-family: 'Heebo', sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    /* ניווט - 7 כפתורים בשורה אחת ללא טקסט */
+    .top-nav-buttons {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      margin-bottom: 15px;
+      flex-shrink: 0;
+    }
+
+    .top-nav-buttons button {
+      border: none; padding: 12px 0; border-radius: 8px; cursor: pointer;
+      font-size: 13px; font-weight: 700; transition: all 0.2s ease; display: inline-flex;
+      align-items: center; justify-content: center;
+    }
+    
+    .btn-secondary { background: #f3e8ff; color: var(--primary); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #e9d5ff; color: var(--purple-main); border-color: #c084fc; }
+    .btn-active { background: var(--purple-main) !important; color: #fff !important; border-color: var(--purple-hover) !important; }
+
+    .actions-row {
+      display: flex; gap: 8px; margin-bottom: 20px; align-items: center; flex-shrink: 0;
+    }
+    .search-input {
+      flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);
+      font-size: 13px; background: #faf5ff; outline: none; transition: all 0.2s ease;
+    }
+    .search-input:focus { border-color: #c084fc; background: #fff; }
+    
+    .icon-btn {
+      background: #ffffff; border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px; cursor: pointer; color: var(--text-muted); display: inline-flex;
+      align-items: center; justify-content: center; transition: all 0.2s ease; flex-shrink: 0;
+    }
+    .icon-btn:hover { background: #f3e8ff; color: var(--primary); border-color: #d8b4fe; }
+
+    #trashHeader {
+      display: none; text-align: center; color: #6b21a8; font-weight: 700; font-size: 13px;
+      margin-bottom: 15px; background: #f3e8ff; padding: 10px; border-radius: 8px;
+      border: 1px dashed #d8b4fe; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0;
+    }
+
+    .fax-list { flex: 1; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; gap: 12px; }
+    .fax-list::-webkit-scrollbar { width: 6px; }
+    .fax-list::-webkit-scrollbar-thumb { background: #d8b4fe; border-radius: 4px; }
+
+    .fax-card {
+      background: #faf5ff; border: 1px solid var(--border); border-radius: 8px;
+      padding: 14px; transition: all 0.2s ease; flex-shrink: 0;
+    }
+    .fax-card:hover { background: #ffffff; border-color: #d8b4fe; box-shadow: 0 4px 12px rgba(107,33,168,0.08); }
+    
+    .fax-header {
+      display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px;
+    }
+    
+    .fax-info { display: flex; flex-direction: column; gap: 4px; cursor: pointer; }
+    .fax-sender { font-family: 'Heebo', sans-serif; font-weight: 800; color: var(--primary); font-size: 15px; }
+    .fax-date { font-size: 12px; color: var(--text-muted); }
+    
+    .fax-controls { display: flex; gap: 4px; }
+    .ctrl-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 6px; border-radius: 6px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; }
+    .ctrl-btn:hover { background: #e9d5ff; color: var(--primary); }
+
+    .fax-preview-container {
+      display: none; margin-top: 15px; border-top: 1px dashed var(--border); padding-top: 15px;
+    }
+    .fax-preview-container.open { display: block; }
+    
+    .pdf-wrapper { 
+      position: relative; width: 100%; height: 350px; 
+      border: 1px solid var(--border); border-radius: 8px; overflow: hidden; 
+      background: #e2e8f0; display: flex; align-items: center; justify-content: center;
+    }
+    .pdf-frame { width: 100%; height: 100%; border: none; transition: transform 0.3s ease; }
+    
+    .pdf-toolbar {
+      position: absolute; top: 10px; left: 10px;
+      display: flex; gap: 6px; z-index: 20;
+      background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(4px);
+      padding: 6px; border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(107, 33, 168, 0.15);
+      border: 1px solid var(--border);
+    }
+
+    .tool-btn {
+      background: #f3e8ff; border: 1px solid #d8b4fe; border-radius: 6px;
+      color: var(--primary); cursor: pointer; padding: 6px; 
+      display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .tool-btn:hover { background: #e9d5ff; color: var(--purple-main); border-color: #c084fc; }
+
+    /* Modal / Popup for Full Screen PDF */
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 9999;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-content {
+      background: var(--surface); width: 100%; max-width: 900px; height: 95%;
+      border-radius: 12px; display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 20px; background: var(--bg); border-bottom: 1px solid var(--border);
+    }
+    .modal-title { font-family: 'Heebo', sans-serif; font-weight: 800; color: var(--primary); font-size: 16px; margin:0;}
+    
+    .close-modal-btn {
+      background: #f3e8ff; color: var(--primary); border: 1px solid var(--border);
+      border-radius: 6px; padding: 8px; cursor: pointer; display: flex; 
+      align-items: center; justify-content: center; transition: all 0.2s ease; line-height: 0;
+    }
+    .close-modal-btn:hover { background: #e9d5ff; color: var(--purple-main); border-color: #c084fc; }
+    
+    .modal-body { flex: 1; background: #e2e8f0; }
+
+    .svg-icon { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    
+    .spinning { animation: spin 1s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(-360deg); } }
+
+    .loading-main, .loading-pdf, .empty-main { 
+      text-align: center; padding: 30px; font-size: 14px; border-radius: 8px; 
+      font-weight: 600; color: var(--text-muted); 
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .loading-main, .empty-main { border: 1px dashed var(--border); background: var(--surface); padding: 40px 20px; flex-shrink: 0;}
+
+    .footer { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border); text-align: center; font-size: 12px; color: #475569; line-height: 1.8; flex-shrink: 0; }
+    .footer a { color: var(--primary); text-decoration: none; font-weight: bold; }
+    .footer a:hover { text-decoration: underline; }
+    .email-copy { color: var(--primary); font-weight: bold; cursor: pointer; direction: ltr; display: inline-block; }
+    .email-copy:hover { text-decoration: underline; }
+
+    @media (max-width: 450px) {
+      body { padding: 10px; }
+      .container { padding: 20px 15px; border-radius: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="updateAlertBox" class="update-alert-box">
+    עדכון גרסה זמין! לחץ כאן להורדה
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <div style="text-align: right; width: 28px;">
+        <img src="icon/icon48.png" alt="לוגו" style="width: 28px; height: 28px; object-fit: contain; vertical-align: middle;">
+      </div>
+      <h2 class="header-title">פקסים נכנסים</h2>
+      <div style="text-align: left; width: 28px; display: flex; justify-content: flex-end; align-items: center;">
+        <svg class="svg-icon" viewBox="0 0 24 24" style="width: 28px; height: 28px; stroke: var(--purple-main);"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+      </div>
+    </div>
+
+    <!-- 7 כפתורים עם אייקונים בלבד -->
+    <div class="top-nav-buttons">
+      <button id="navHome" class="btn-secondary" title="הודעות">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      </button>
+      <button id="navSendSms" class="btn-secondary" title="שליחה">
+        <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+      </button>
+      <button id="navFax" class="btn-secondary btn-active" title="פקס">
+        <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+      </button>
+      <button id="navOptions" class="btn-secondary" title="הגדרות">
+        <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
+      <button id="navContacts" class="btn-secondary" title="אנשי קשר">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      </button>
+      <button id="navFilters" class="btn-secondary" title="מסננים">
+        <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+      </button>
+      <button id="navToggleView" class="btn-secondary" title="החלף תצוגה"></button>
+    </div>
+
+    <div class="actions-row">
+      <input type="text" id="searchInput" class="search-input" placeholder="חפש מספר שולח...">
+      <button id="faxSettingsBtn" class="icon-btn" title="הגדרות תיקיית פקסים">
+        <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
+      <button id="trashBtn" class="icon-btn" title="סל מחזור פקסים">
+        <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+      </button>
+      <button id="refreshBtn" class="icon-btn" title="רענן פקסים">
+        <svg id="refreshIcon" class="svg-icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+      </button>
+    </div>
+
+    <div id="trashHeader">
+      <svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+      <span>סל מחזור פקסים</span>
+    </div>
+
+    <div id="faxList" class="fax-list">
+      <!-- ה-Spinner יוחלף אוטומטית מהג'אווה סקריפט -->
+    </div>
+
+    <div class="footer">
+      <div>כל הזכויות שמורות</div>
+      <div><a href="https://github.com/Tzadikvtovlo" target="_blank">צדיק וטוב לו</a></div>
+      <div><span class="email-copy" title="לחץ להעתקת המייל ללוח">q9411aa@gmail.com</span></div>
+    </div>
+  </div>
+
+  <!-- מודאל לתצוגת מסך מלא -->
+  <div id="pdfModal" class="modal-overlay">
+    <div class="modal-content" id="modalInnerContent">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">תצוגת פקס</h3>
+        <button id="closeModalBtn" class="close-modal-btn" title="סגור">
+          <svg class="svg-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <iframe id="modalPdfFrame" class="pdf-frame" style="height: 100%; border:none; border-radius:0;"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script src="fax.js"></script>
+</body>
+</html>
