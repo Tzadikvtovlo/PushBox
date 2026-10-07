@@ -27,21 +27,55 @@
       padding: 40px 20px;
       direction: rtl;
       margin: 0;
-      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .update-alert-box {
+      display: none;
+      text-align: center;
+      background: #6b21a8;
+      color: white;
+      padding: 10px;
+      border-radius: var(--radius);
+      margin: 0 auto 20px auto;
+      max-width: 600px;
+      width: 100%;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      animation: pulse-purple 2s infinite;
+      flex-shrink: 0;
+    }
+    .update-alert-box:hover { background: #581c87; }
+    
+    @keyframes pulse-purple {
+      0% { box-shadow: 0 0 0 0 rgba(107, 33, 168, 0.6); }
+      70% { box-shadow: 0 0 0 6px rgba(107, 33, 168, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(107, 33, 168, 0); }
     }
 
     .container {
       background: var(--surface);
       padding: 30px;
       border-radius: var(--radius);
-      max-width: 500px;
+      max-width: 600px;
       width: 100%;
       margin: 0 auto;
       box-shadow: 0 10px 25px -5px rgba(107, 33, 168, 0.05), 0 8px 10px -6px rgba(107, 33, 168, 0.02);
       border: 1px solid var(--border);
-      min-height: calc(100vh - 80px);
+      height: 100%;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
+      animation: fadeSlide 0.25s ease-out;
+    }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .header {
@@ -64,47 +98,37 @@
       text-align: center;
     }
 
-    .update-alert-box {
-      display: none;
-      text-align: center;
-      background: #6b21a8;
-      color: white;
-      padding: 10px;
-      border-radius: var(--radius);
-      margin: 0 auto 20px auto;
-      max-width: 500px;
-      font-weight: 700;
-      font-size: 14px;
-      cursor: pointer;
-      animation: pulse-purple 2s infinite;
-      flex-shrink: 0;
-    }
-    .update-alert-box:hover { background: #581c87; }
-    
-    @keyframes pulse-purple {
-      0% { box-shadow: 0 0 0 0 rgba(107, 33, 168, 0.6); }
-      70% { box-shadow: 0 0 0 6px rgba(107, 33, 168, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(107, 33, 168, 0); }
-    }
-
+    /* ניווט - 7 כפתורים בשורה */
     .top-nav-buttons {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
       margin-bottom: 24px;
       flex-shrink: 0;
     }
     
     .top-nav-buttons button {
-      border: none; padding: 11px 8px; border-radius: 8px; cursor: pointer;
-      font-size: 13px; font-weight: 700; transition: all 0.2s ease; display: inline-flex;
-      align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+      border: none; padding: 12px 0; border-radius: 8px; cursor: pointer;
+      transition: all 0.2s ease; display: inline-flex;
+      align-items: center; justify-content: center;
     }
     .btn-secondary { background: #f3e8ff; color: var(--primary); border: 1px solid var(--border); }
     .btn-secondary:hover { background: #e9d5ff; color: var(--purple-main); border-color: #c084fc; }
+    .btn-active { background: var(--purple-main) !important; color: #fff !important; border-color: var(--purple-hover) !important; }
 
-    .form-group { margin-bottom: 20px; }
-    .form-row { display: flex; gap: 10px; margin-bottom: 20px; }
+    /* אזור גלילה פנימית לטפסים */
+    .scrollable-content {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 4px;
+      display: flex;
+      flex-direction: column;
+    }
+    .scrollable-content::-webkit-scrollbar { width: 6px; }
+    .scrollable-content::-webkit-scrollbar-thumb { background: #d8b4fe; border-radius: 4px; }
+
+    .form-group { margin-bottom: 20px; flex-shrink: 0; border-radius: 8px; transition: box-shadow 0.3s; }
+    .form-row { display: flex; gap: 10px; margin-bottom: 20px; flex-shrink: 0; }
     
     label { display: block; margin-bottom: 8px; font-weight: 600; color: #334155; font-size: 14px; }
     input, select {
@@ -115,21 +139,35 @@
     input:focus, select:focus { border-color: #c084fc; background-color: #fff; box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.15); }
     input[readonly] { background-color: #f3e8ff; border-color: #d8b4fe; color: #581c87; cursor: default; text-align: center; font-weight: 800; letter-spacing: 1px; }
 
-    .btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; flex-shrink: 0; }
+    .btn-group button {
+      border: none; padding: 12px 15px; border-radius: 8px; cursor: pointer;
+      font-size: 14px; font-weight: 700; transition: all 0.2s ease; display: inline-flex;
+      align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+    }
     
-    /* תמיד 18px לכל האייקונים בדף (חוץ מההדר שמקבל דריסה ל-28) */
     .svg-icon { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; overflow: visible; }
+    .spinning { animation: spin 1s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(-360deg); } }
 
-    .footer { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border); text-align: center; font-size: 12px; color: var(--text-muted); line-height: 1.8; }
+    .footer { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border); text-align: center; font-size: 12px; color: var(--text-muted); line-height: 1.8; flex-shrink: 0; }
     .footer a { color: var(--primary); text-decoration: none; font-weight: bold; }
     .footer a:hover { text-decoration: underline; }
     .email-copy { color: var(--primary); font-weight: bold; cursor: pointer; direction: ltr; display: inline-block; }
     .email-copy:hover { text-decoration: underline; }
 
+    /* אזור גיבוי ושחזור */
+    .backup-section {
+      background: #fdfaFE; border: 1px dashed var(--border);
+      padding: 15px; border-radius: 8px; margin-bottom: 20px; flex-shrink: 0;
+    }
+    .backup-title { display: flex; align-items: center; gap: 6px; color: var(--purple-main); font-weight: bold; font-size: 14px; margin-bottom: 10px; }
+
     @media (max-width: 450px) {
       body { padding: 15px 10px; }
-      .container { padding: 20px 15px; border-radius: 8px; min-height: calc(100vh - 30px); }
-      .form-row { flex-direction: column; }
+      .container { padding: 20px 15px; border-radius: 8px; }
+      /* מונע מתיבת המספר והגרסה להישבר לעמודה נפרדת */
+      .form-row:not(.keep-row) { flex-direction: column; }
     }
   </style>
 </head>
@@ -149,80 +187,127 @@
       </div>
     </div>
 
+    <!-- כפתורי ניווט -->
     <div class="top-nav-buttons">
-      <button id="navHome" class="btn-secondary">
-        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> הודעות
+      <button id="navHome" class="btn-secondary" title="הודעות">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
       </button>
-      <button id="navContacts" class="btn-secondary">
-        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> אנשי קשר
+      <button id="navSendSms" class="btn-secondary" title="שליחה">
+        <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
       </button>
-      <button id="navFilters" class="btn-secondary">
-        <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg> מסננים
+      <button id="navFax" class="btn-secondary" title="פקס">
+        <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
       </button>
-      <button id="navSendSms" class="btn-secondary">
-        <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> שלח SMS
+      <button id="navOptions" class="btn-secondary btn-active" title="הגדרות">
+        <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       </button>
+      <button id="navContacts" class="btn-secondary" title="אנשי קשר">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+      </button>
+      <button id="navFilters" class="btn-secondary" title="מסננים">
+        <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+      </button>
+      <button id="navToggleView" class="btn-secondary" title="החלף תצוגה"></button>
     </div>
     
-    <div class="form-group">
-      <label for="token">טוקן התחברות (Token):</label>
-      <input type="text" id="token" placeholder="הכנס טוקן מערכת כאן">
-    </div>
-
-    <div class="form-row">
-      <div class="form-group" style="flex: 2; margin-bottom: 0;">
-        <label for="phoneNumber">מספר המערכת:</label>
-        <input type="text" id="phoneNumber" placeholder="ישלף אוטומטית..." readonly title="מספר זה מעודכן אוטומטית בהתאם לטוקן">
+    <!-- אזור גלילה פנימית -->
+    <div class="scrollable-content">
+      
+      <!-- גיבוי ושחזור -->
+      <div class="backup-section">
+        <div class="backup-title">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          <span>גיבוי ושחזור נתונים</span>
+        </div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">
+          ייצוא שומר את כל אנשי הקשר, מסננים, טוקן התחברות, הודעות שהושעו, התראות וכו'. מומלץ לשמור לפני שדרוג גרסה כדי לא לאבד נתונים!
+        </div>
+        <div class="btn-group">
+          <button id="exportBtn" class="btn-secondary" style="flex:1;">
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> ייצא גיבוי
+          </button>
+          <button id="importBtn" class="btn-secondary" style="flex:1;">
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> טען משחזור
+          </button>
+        </div>
+        <input type="file" id="importFile" accept=".json" style="display:none;">
       </div>
-      <div class="form-group" style="flex: 1; margin-bottom: 0;">
-        <label for="installedVersion">גרסה מותקנת:</label>
-        <input type="text" id="installedVersion" readonly style="direction: ltr; font-weight: bold; color: var(--purple-main);">
+
+      <!-- שמירת הגדרות (רוחב מלא) -->
+      <button id="save" class="btn-secondary" style="width: 100%; margin-bottom: 20px; padding: 12px 0; border-radius: 8px; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> 
+        שמור הגדרות
+      </button>
+
+      <!-- הזנת טוקן ואימות באותה שורה -->
+      <div class="form-group">
+        <label for="token">טוקן התחברות (Token):</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="token" placeholder="הכנס טוקן מערכת כאן" style="flex: 1;">
+          <button id="verifyToken" class="btn-secondary" title="אמת טוקן" style="padding: 0 14px; height: 42.5px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          </button>
+        </div>
       </div>
-    </div>
-    
-    <div class="form-group">
-      <label for="interval">תדירות בדיקה אוטומטית ברקע:</label>
-      <select id="interval">
-        <option value="0">ללא בדיקה אוטומטית (ידני בלבד)</option>
-        <option value="1">כל דקה</option>
-        <option value="5">כל 5 דקות</option>
-        <option value="15">כל 15 דקות</option>
-        <option value="30">כל 30 דקות</option>
-      </select>
-    </div>
 
-    <div class="form-group">
-      <label for="notificationStyle">התראות עבור הודעות חדשות:</label>
-      <select id="notificationStyle">
-        <option value="both">חלון קופץ (Push) וסמל התוסף</option>
-        <option value="push">חלון קופץ (Push)</option>
-        <option value="badge">עדכון בסמל התוסף</option>
-      </select>
-    </div>
+      <div class="form-row keep-row" style="display: flex; gap: 10px; margin-bottom: 20px; flex-shrink: 0;">
+        <div class="form-group" style="flex: 2; margin-bottom: 0; min-width: 0;">
+          <label for="phoneNumber">מספר המערכת:</label>
+          <input type="text" id="phoneNumber" placeholder="ישלף אוטומטית..." readonly title="מספר זה מעודכן אוטומטית בהתאם לטוקן">
+        </div>
+        <div class="form-group" style="flex: 1; margin-bottom: 0; min-width: 0;">
+          <label for="installedVersion">גרסה מותקנת:</label>
+          <input type="text" id="installedVersion" readonly style="direction: ltr; font-weight: bold; color: var(--purple-main);">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="interval">תדירות בדיקה אוטומטית ברקע:</label>
+        <select id="interval">
+          <option value="0">ללא בדיקה אוטומטית (ידני בלבד)</option>
+          <option value="1">כל דקה</option>
+          <option value="5">כל 5 דקות</option>
+          <option value="15">כל 15 דקות</option>
+          <option value="30">כל 30 דקות</option>
+        </select>
+      </div>
 
-    <div class="form-group">
-      <label for="updateNotificationStyle">התראות עבור גרסה חדשה (עדכונים):</label>
-      <select id="updateNotificationStyle">
-        <option value="both">באנר בפופ-אפ וסמל התוסף</option>
-        <option value="popup">באנר בפופ-אפ בלבד</option>
-        <option value="badge">סמל התוסף בלבד</option>
-        <option value="none">ללא התראות (רק בדף הגדרות)</option>
-      </select>
-    </div>
-    
-    <div class="btn-group">
-      <button id="verifyToken" class="btn-secondary" style="flex:1;">
-        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> אמת טוקן
-      </button>
-      <button id="save" class="btn-secondary" style="flex:1;">
-        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> שמור
-      </button>
-    </div>
+      <div class="form-group">
+        <label for="notificationStyle">התראות עבור הודעות חדשות:</label>
+        <select id="notificationStyle">
+          <option value="both">חלון קופץ (Push) וסמל התוסף</option>
+          <option value="push">חלון קופץ (Push)</option>
+          <option value="badge">עדכון בסמל התוסף</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="updateNotificationStyle">התראות עבור גרסה חדשה (עדכונים):</label>
+        <select id="updateNotificationStyle">
+          <option value="both">באנר בפופ-אפ וסמל התוסף</option>
+          <option value="popup">באנר בפופ-אפ בלבד</option>
+          <option value="badge">סמל התוסף בלבד</option>
+          <option value="none">ללא התראות (רק בדף הגדרות)</option>
+        </select>
+      </div>
+
+      <!-- הגדרת תיקיית פקס מותאמת -->
+      <div class="form-group" id="faxFolderGroup" style="padding: 10px; border: 1px solid transparent;">
+        <label for="faxFolderPath">מיקום תיקיית פקסים (בשרת ימות המשיח):</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="faxFolderPath" placeholder="ivr2:/FaxIn" style="flex:1;">
+          <button id="resetFaxFolderBtn" class="btn-secondary" title="שחזר לברירת מחדל" style="padding: 0 14px; height: 42.5px; border-radius: 8px;">
+            <svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
+          </button>
+        </div>
+      </div>
+      
+    </div> <!-- סוף אזור נגלל -->
 
     <div class="footer">
       <div>כל הזכויות שמורות</div>
       <div><a href="https://github.com/Tzadikvtovlo" target="_blank">צדיק וטוב לו</a></div>
-      <div><span class="email-copy" id="copyEmail" title="לחץ להעתקת המייל ללוח">q9411aa@gmail.com</span></div>
+      <div><span class="email-copy" title="לחץ להעתקת המייל ללוח">q9411aa@gmail.com</span></div>
     </div>
   </div>
   <script src="options.js"></script>
