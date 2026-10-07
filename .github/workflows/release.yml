@@ -21,44 +21,32 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Read manifest and check release
+      - name: Determine Version
         id: version_logic
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 1. קריאת שם התוסף ומספר הגרסה מתוך המניפסט
+          # קריאת שם התוסף ומספר הגרסה מתוך המניפסט (ללא שינוי הקובץ)
           EXT_NAME=$(jq -r '.name' manifest.json)
-          VERSION=$(jq -r '.version' manifest.json)
+          BASE_VERSION=$(jq -r '.version' manifest.json)
           
           echo "שם התוסף שנמצא: $EXT_NAME"
-          echo "גרסה שנמצאה: $VERSION"
+          echo "גרסת הבסיס במניפסט: $BASE_VERSION"
           
-          # 2. בדיקה האם הגרסה כבר קיימת בעמוד ההורדות ב-GitHub
-          if gh release view "v$VERSION" >/dev/null 2>&1; then
-            echo "הגרסה v$VERSION כבר קיימת בהורדות. מעלה את המספר ב-0.01..."
-            
-            # חישוב הגרסה החדשה
-            NEW_VERSION=$(awk "BEGIN {printf \"%.2f\", $VERSION + 0.01}")
-            echo "הגרסה החדשה היא: $NEW_VERSION"
-            
-            # עדכון קובץ המניפסט
-            jq ".version = \"$NEW_VERSION\"" manifest.json > tmp.json && mv tmp.json manifest.json
-            
-            # ביצוע קומיט לגרסה החדשה
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add manifest.json
-            git commit -m "Auto-bump version to $NEW_VERSION [skip ci]"
-            git push
-            
-            # עדכון משתנה הגרסה הכללי כדי שישמש ליצירת הקובץ
-            VERSION=$NEW_VERSION
+          # הגדרת משתנה הגרסה לשימוש באריזה
+          VERSION=$BASE_VERSION
+          
+          # בדיקה האם הגרסה כבר קיימת בעמוד ההורדות ב-GitHub
+          if gh release view "v$BASE_VERSION" >/dev/null 2>&1; then
+            echo "הגרסה v$BASE_VERSION כבר קיימת בהורדות."
+            # חישוב הגרסה החדשה רק עבור שם הקובץ והשחרור (ללא נגיעה במניפסט)
+            VERSION=$(awk "BEGIN {printf \"%.2f\", $BASE_VERSION + 0.01}")
+            echo "מחשב גרסה חדשה לאריזה: $VERSION"
           else
-            echo "לא קיים שחרור v$VERSION בעמוד ההורדות. ממשיך עם הגרסה הנוכחית."
+            echo "הגרסה לא קיימת בהורדות. ממשיך עם גרסת הבסיס."
           fi
           
-          # 3. יצירת משתנים עבור השלבים הבאים
-          # יצירת שם הקובץ בדיוק כפי שביקשת (שם התוסף + v + גרסה)
+          # יצירת שם הקובץ (שם התוסף + v + גרסה)
           ZIP_NAME="${EXT_NAME} v${VERSION}.zip"
           
           echo "TAG_NAME=v$VERSION" >> $GITHUB_OUTPUT
@@ -75,7 +63,7 @@ jobs:
         run: |
           ZIP_NAME="${{ steps.version_logic.outputs.ZIP_NAME }}"
           
-          # אריזת הקבצים, החרגת קבצי מערכת, תיעוד, וקובץ הזיפ עצמו כדי שלא יארוז את עצמו בטעות
+          # אריזת הקבצים, החרגת קבצי מערכת, תיעוד, וקובץ הזיפ עצמו
           zip -r "$ZIP_NAME" . -x "README.md" -x "readme.md" -x ".github/*" -x ".git/*" -x "*.zip"
           
           echo "נארז בהצלחה: $ZIP_NAME"
@@ -98,7 +86,6 @@ jobs:
             חילוץ הקבצים, והדבקתם בתיקית התוסף, תוך דריסה של הקיימים. ולאחמ"כ לחיצה על רענון בסמל התוסף בעמוד התוספים, או סגירה ופתיחה מחדש של הדפדפן.
 
             </div>
-          # שימוש בנתיב כללי כדי שרווחים בשם התוסף לא יגרמו לשגיאה בהעלאה
           files: "*.zip"
           draft: false
           prerelease: false
