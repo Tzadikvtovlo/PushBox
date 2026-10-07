@@ -69,7 +69,7 @@
 
     .actions-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr auto auto auto;
+      grid-template-columns: 1fr 1fr auto auto auto auto;
       gap: 6px;
       width: 100%;
     }
@@ -199,9 +199,11 @@
     }
     #openDedicatedSmsBtn {
       background: none; border: none; color: var(--text-muted);
-      cursor: pointer; text-decoration: underline; font-size: 11px; padding: 0;
+      cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center;
+      border-radius: 6px; transition: all 0.2s;
     }
-    #openDedicatedSmsBtn:hover { color: var(--primary); }
+    #openDedicatedSmsBtn:hover { color: var(--primary); background: #f3e8ff; }
+    
     #composePanel input, #composePanel textarea {
       width: 100%; padding: 10px; border: 1px solid var(--border);
       border-radius: 6px; font-size: 13px; outline: none; font-family: inherit; background: #faf5ff;
@@ -351,7 +353,7 @@
       </div>
     </div>
 
-    <!-- שורה ראשונה (פעולות וניווט לחלון מלא) -->
+    <!-- שורה ראשונה -->
     <div class="actions-grid">
       <button id="composeBtn" class="icon-btn" title="שליחת הודעה">
         <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
@@ -359,24 +361,27 @@
       </button>
       <button id="trashBtn" class="icon-btn" title="סל מחזור">
         <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-        סל מחזור
+        מחזור
       </button>
-      <a href="options.html" target="_blank" class="icon-btn btn-square" title="הגדרות">
+      <button id="navFax" class="icon-btn btn-square" title="פתח חלונית פקסים">
+        <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+      </button>
+      <button id="navOptions" class="icon-btn btn-square" title="פתח חלונית הגדרות">
         <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-      </a>
-      <a href="contacts.html" target="_blank" class="icon-btn btn-square" title="אנשי קשר">
+      </button>
+      <button id="navContacts" class="icon-btn btn-square" title="פתח חלונית אנשי קשר">
         <svg class="svg-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-      </a>
-      <a href="filters.html" target="_blank" class="icon-btn btn-square" title="מסננים">
+      </button>
+      <button id="navFilters" class="icon-btn btn-square" title="פתח חלונית מסננים">
         <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-      </a>
+      </button>
     </div>
 
-    <!-- שורה שניה (חיפוש ופתיחת חלונית צד) -->
+    <!-- שורה שניה -->
     <div class="actions-row-2">
       <input type="text" id="searchInput" class="search-input" placeholder="חפש בהודעות...">
-      <button id="openSidePanelBtn" class="icon-btn btn-square" title="פתח כחלונית צד">
-        <svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="15" y1="3" x2="15" y2="21"></line></svg>
+      <button id="openFullPageBtn" class="icon-btn btn-square" title="פתח דף תוסף (מסך מלא)">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
       </button>
       <button id="toggleAllBtn" class="icon-btn btn-square" title="צמצם/הרחב הכל">
         <svg class="svg-icon toggle-all-icon" viewBox="0 0 24 24"><polyline points="7 15 12 20 17 15"></polyline><polyline points="7 9 12 4 17 9"></polyline></svg>
@@ -393,7 +398,9 @@
   <div id="composePanel">
     <div class="compose-header">
       <span>שליחת הודעה חדשה</span>
-      <button id="openDedicatedSmsBtn">חלון מלא</button>
+      <button id="openDedicatedSmsBtn" title="פתיחה בדף חדש (חלון מלא)">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+      </button>
     </div>
     <input type="text" id="smsTo" list="contactsDataList" placeholder="מספר נמען או בחר מרשימה..." autocomplete="off">
     <datalist id="contactsDataList"></datalist>
