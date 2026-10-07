@@ -10,22 +10,59 @@ document.addEventListener('DOMContentLoaded', () => {
   chrome.storage.local.get(['updateAvailable'], (data) => {
     if (data.updateAvailable) {
       const alertBox = document.getElementById('updateAlertBox');
-      alertBox.style.display = 'block';
-      const currentVersion = chrome.runtime.getManifest().version;
-      fetch('https://api.github.com/repos/Tzadikvtovlo/PushBox/releases/latest')
-        .then(res => res.json())
-        .then(releaseData => {
-           const latestVersion = releaseData.tag_name ? releaseData.tag_name.replace(/^v/i, '').trim() : currentVersion;
-           alertBox.textContent = `יש עדכון! מותקן: v${currentVersion} | זמין: v${latestVersion}`;
-        }).catch(() => { alertBox.textContent = "עדכון גרסה זמין! לחץ כאן להורדה"; });
-      alertBox.addEventListener('click', () => { window.open('https://github.com/Tzadikvtovlo/PushBox/releases', '_blank'); });
+      if (alertBox) {
+        alertBox.style.display = 'block';
+        const currentVersion = chrome.runtime.getManifest().version;
+        fetch('https://api.github.com/repos/Tzadikvtovlo/PushBox/releases/latest')
+          .then(res => res.json())
+          .then(releaseData => {
+             const latestVersion = releaseData.tag_name ? releaseData.tag_name.replace(/^v/i, '').trim() : currentVersion;
+             alertBox.textContent = `יש עדכון! מותקן: v${currentVersion} | זמין: v${latestVersion}`;
+          }).catch(() => { alertBox.textContent = "עדכון גרסה זמין! לחץ כאן להורדה"; });
+        alertBox.addEventListener('click', () => { window.open('https://github.com/Tzadikvtovlo/PushBox/releases/latest/download/PushBox.zip', '_blank'); });
+      }
     }
   });
 
-  document.getElementById('navHome').addEventListener('click', () => { window.location.href = 'sidepanel.html'; });
-  document.getElementById('navOptions').addEventListener('click', () => { window.location.href = 'options.html'; });
-  document.getElementById('navFilters').addEventListener('click', () => { window.location.href = 'filters.html'; });
-  document.getElementById('navSendSms').addEventListener('click', () => { window.location.href = 'send_sms.html'; });
+  document.getElementById('navHome')?.addEventListener('click', () => { window.location.href = 'messages.html'; });
+  document.getElementById('navSendSms')?.addEventListener('click', () => { window.location.href = 'send_sms.html'; });
+  document.getElementById('navFax')?.addEventListener('click', () => { window.location.href = 'fax.html'; });
+  document.getElementById('navOptions')?.addEventListener('click', () => { window.location.href = 'options.html'; });
+  document.getElementById('navContacts')?.addEventListener('click', () => { window.location.href = 'contacts.html'; });
+  document.getElementById('navFilters')?.addEventListener('click', () => { window.location.href = 'filters.html'; });
+  
+  // לוגיקת הכפתור השביעי
+  const toggleViewBtn = document.getElementById('navToggleView');
+  if (toggleViewBtn) {
+    if (window.innerWidth < 800) {
+      toggleViewBtn.innerHTML = `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
+      toggleViewBtn.title = "פתח במסך מלא";
+      toggleViewBtn.addEventListener('click', () => { 
+        const currentPage = window.location.pathname.split('/').pop() || 'contacts.html';
+        chrome.tabs.create({ url: currentPage + window.location.search }); 
+      });
+    } else {
+      toggleViewBtn.innerHTML = `<svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="15" y1="3" x2="15" y2="21"></line></svg>`;
+      toggleViewBtn.title = "פתח בחלונית צד";
+      toggleViewBtn.addEventListener('click', () => {
+        const currentPage = window.location.pathname.split('/').pop() || 'contacts.html';
+        chrome.storage.local.set({ targetSidePanelPage: currentPage + window.location.search }, () => {
+          chrome.windows.getCurrent({ populate: true }, (window) => {
+            chrome.runtime.sendMessage({ action: 'open-side-panel', windowId: window.id });
+          });
+        });
+      });
+    }
+  }
+
+  document.querySelectorAll('.email-copy').forEach(el => {
+    el.addEventListener('click', (e) => {
+      navigator.clipboard.writeText(e.target.innerText);
+      const originalText = e.target.innerText;
+      e.target.innerText = "הועתק!";
+      setTimeout(() => e.target.innerText = originalText, 1500);
+    });
+  });
 
   loadContacts();
 
@@ -66,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
       contactsContainer.innerHTML = '';
 
       if (contacts.length === 0) {
-        contactsContainer.innerHTML = '<div style="text-align:center; color:#64748b; font-size:13px;">אין אנשי קשר עדיין.</div>';
+        contactsContainer.innerHTML = '<div style="text-align:center; color:#64748b; font-size:13px; margin-top:20px;">אין אנשי קשר עדיין.</div>';
         return;
       }
 
@@ -80,6 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="contact-phone">${contact.phone}</span>
           </div>
           <div class="contact-actions">
+            <button class="btn-action btn-view-msgs" data-phone="${contact.phone}" title="הצג הודעות">
+              <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            </button>
             <button class="btn-action btn-send-sms" data-phone="${contact.phone}" data-name="${contact.name}" title="שלח SMS">
               <svg class="svg-icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
             </button>
@@ -110,7 +150,6 @@ document.addEventListener('DOMContentLoaded', () => {
           
           contactName.classList.add('editing-mode');
           contactPhone.classList.add('editing-mode');
-          window.scrollTo(0, 0);
         });
       });
 
@@ -126,6 +165,13 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', (e) => {
           const phone = e.currentTarget.getAttribute('data-phone');
           window.location.href = `filters.html?sender=${encodeURIComponent(phone)}`;
+        });
+      });
+
+      document.querySelectorAll('.btn-view-msgs').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const phone = e.currentTarget.getAttribute('data-phone');
+          window.location.href = `messages.html?search=${encodeURIComponent(phone)}`;
         });
       });
 
